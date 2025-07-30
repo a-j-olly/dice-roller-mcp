@@ -27,9 +27,13 @@ Examples:
 - `node build/src/index.js --transport=stdio`
 
 ### Testing
-- `npm test` - Run all tests once
-- `npm run test:watch` - Run tests in watch mode during development
-- `npm run test:integration` - Run only the integration tests
+- `npm test` - Run all tests (unit + integration)
+- `npm run test:unit` - Run unit tests only
+- `npm run test:integration` - Run integration tests only
+- `npm run test:watch` - Run all tests in watch mode
+- `npm run test:watch:unit` - Run unit tests in watch mode
+- `npm run test:watch:integration` - Run integration tests in watch mode
+- `npm run coverage` - Run tests with coverage report
 - `npm run coverage` - Run tests with coverage report
 
 ### Docker
@@ -69,9 +73,13 @@ Examples:
 ### Testing Strategy
 
 - Uses Vitest as the test framework
-- Tests are located in `tests/` directory
-- Integration tests verify the full server functionality via stdio transport
-- Unit tests cover dice rolling logic and validation
+- **Unit Tests** (`tests/unit/`) - Fast, isolated tests for individual components:
+  - `tests/unit/dice/` - Dice rolling logic and validation
+  - `tests/unit/utils/` - Utility functions like logging
+- **Integration Tests** (`tests/integration/`) - End-to-end tests for complete functionality:
+  - `tests/integration/transports/stdio-transport.test.ts` - Stdio transport
+  - `tests/integration/transports/http-transport.test.ts` - HTTP/SSE transport
+  - `tests/integration/index.test.ts` - Entry point and command-line parsing
 
 ### Configuration Files
 

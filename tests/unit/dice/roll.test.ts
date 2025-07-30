@@ -15,8 +15,8 @@ import {
 	countSuccesses,
 	generateOperation,
 	generateDescription,
-} from '../../src/dice/roll.js';
-import { DieResult, RollDiceParams } from '../../src/dice/types.js';
+} from '../../../src/dice/roll.js';
+import { DieResult, RollDiceParams } from '../../../src/dice/types.js';
 
 // Mock Math.random to make tests deterministic
 const originalRandom = Math.random;

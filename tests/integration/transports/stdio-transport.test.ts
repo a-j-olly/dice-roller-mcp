@@ -1,23 +1,21 @@
 /**
- * Integration tests for the MCP server.
- * Tests the server's JSON-RPC communication and tool responses.
+ * Integration tests for the MCP server via stdio transport.
+ * Tests the server's JSON-RPC communication over stdin/stdout.
  */
-import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { spawn, type ChildProcess } from 'child_process';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { 
 	RollResponse, 
 	RollMultipleResponse, 
 	McpResponse 
-} from '../src/dice/types.js';
+} from '../../../src/dice/types.js';
 
 // Type aliases for test responses
 type DiceRollResponse = RollResponse;
 type MultipleRollResponse = RollMultipleResponse;
 
-describe('MCP Server Integration', () => {
+describe('Stdio Transport Integration', () => {
 	let serverProcess: ChildProcess;
-	let server: McpServer;
 
 	beforeEach(async () => {
 		// Start the server as a subprocess
@@ -218,6 +216,60 @@ describe('MCP Server Integration', () => {
 			expect(diceResult.result.total).toBeLessThanOrEqual(5);
 		});
 
+		test('drop highest dice', async () => {
+			const request = {
+				jsonrpc: '2.0' as const,
+				method: 'tools/call',
+				params: {
+					name: 'roll_dice',
+					arguments: {
+						dice_count: 5,
+						dice_sides: 10,
+						drop_highest: 2
+					}
+				},
+				id: 7
+			};
+
+			const response = await sendRequest(request);
+			const diceResult = extractDiceResult(response) as DiceRollResponse;
+
+			expect(diceResult.result.operation).toBe('5d10dh2');
+			expect(diceResult.result.description).toBe('Rolled 5d10, dropping highest 2');
+			expect(diceResult.result.dice).toHaveLength(5);
+			
+			// Check that only 3 dice are kept (5 - 2 dropped)
+			const keptDice = diceResult.result.dice.filter(die => die.kept);
+			expect(keptDice).toHaveLength(3);
+		});
+
+		test('drop lowest dice', async () => {
+			const request = {
+				jsonrpc: '2.0' as const,
+				method: 'tools/call',
+				params: {
+					name: 'roll_dice',
+					arguments: {
+						dice_count: 4,
+						dice_sides: 6,
+						drop_lowest: 1
+					}
+				},
+				id: 8
+			};
+
+			const response = await sendRequest(request);
+			const diceResult = extractDiceResult(response) as DiceRollResponse;
+
+			expect(diceResult.result.operation).toBe('4d6dl1');
+			expect(diceResult.result.description).toBe('Rolled 4d6, dropping lowest 1');
+			expect(diceResult.result.dice).toHaveLength(4);
+			
+			// Check that only 3 dice are kept (4 - 1 dropped)
+			const keptDice = diceResult.result.dice.filter(die => die.kept);
+			expect(keptDice).toHaveLength(3);
+		});
+
 		test('invalid parameters should return error', async () => {
 			const request = {
 				jsonrpc: '2.0' as const,
@@ -229,7 +281,7 @@ describe('MCP Server Integration', () => {
 						dice_sides: 6
 					}
 				},
-				id: 7
+				id: 9
 			};
 
 			const response = await sendRequest(request);
@@ -240,6 +292,55 @@ describe('MCP Server Integration', () => {
 			expect(response.error!.message).toContain('Invalid arguments for tool roll_dice');
 			expect(response.error!.message).toContain('dice_count');
 			expect(response.error!.message).toContain('Number must be less than or equal to 1000');
+		});
+
+		test('conflicting drop and keep parameters should return error', async () => {
+			const request = {
+				jsonrpc: '2.0' as const,
+				method: 'tools/call',
+				params: {
+					name: 'roll_dice',
+					arguments: {
+						dice_count: 4,
+						dice_sides: 6,
+						keep_highest: 2,
+						drop_lowest: 1 // Invalid: can't combine keep and drop
+					}
+				},
+				id: 10
+			};
+
+			const response = await sendRequest(request);
+			
+			// Check that the response contains an error in the content
+			expect(response.result).toBeDefined();
+			const content = JSON.parse(response.result!.content[0].text);
+			expect(content.error).toBeDefined();
+			expect(content.error.message).toContain('Invalid parameters');
+		});
+
+		test('drop count exceeding dice count should return error', async () => {
+			const request = {
+				jsonrpc: '2.0' as const,
+				method: 'tools/call',
+				params: {
+					name: 'roll_dice',
+					arguments: {
+						dice_count: 3,
+						dice_sides: 6,
+						drop_highest: 3 // Invalid: can't drop all dice
+					}
+				},
+				id: 11
+			};
+
+			const response = await sendRequest(request);
+			
+			// Check that the response contains an error in the content
+			expect(response.result).toBeDefined();
+			const content = JSON.parse(response.result!.content[0].text);
+			expect(content.error).toBeDefined();
+			expect(content.error.message).toContain('Invalid parameters');
 		});
 	});
 
@@ -283,7 +384,7 @@ describe('MCP Server Integration', () => {
 						count: 3
 					}
 				},
-				id: 9
+				id: 13
 			};
 
 			const response = await sendRequest(request);
@@ -307,7 +408,7 @@ describe('MCP Server Integration', () => {
 						name: 'roll_dice',
 						arguments: { dice_count: 1, dice_sides: 6 }
 					},
-					id: 10
+					id: 14
 				},
 				{
 					jsonrpc: '2.0' as const,
@@ -316,7 +417,7 @@ describe('MCP Server Integration', () => {
 						name: 'roll_dice',
 						arguments: { dice_count: 1, dice_sides: 20 }
 					},
-					id: 11
+					id: 15
 				}
 			];
 
