@@ -1,0 +1,12 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "roll_dice",
+    "arguments": {
+      "dice_count": 3,
+      "dice_sides": 6
+    }
+  }
+}
