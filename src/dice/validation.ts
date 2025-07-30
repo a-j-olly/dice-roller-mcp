@@ -42,6 +42,20 @@ export const rollDiceSchema = z
 				message: 'Must be a positive integer',
 			})
 			.optional(),
+		drop_highest: z
+			.number()
+			.int()
+			.positive({
+				message: 'Must be a positive integer',
+			})
+			.optional(),
+		drop_lowest: z
+			.number()
+			.int()
+			.positive({
+				message: 'Must be a positive integer',
+			})
+			.optional(),
 		reroll: z.array(z.number().int()).optional(),
 		exploding: z.boolean().optional(),
 		target_number: z
@@ -69,6 +83,30 @@ export const rollDiceSchema = z
 		{
 			message: 'Cannot specify both keep_highest and keep_lowest',
 			path: ['keep_highest', 'keep_lowest'],
+		}
+	)
+	.refine(
+		(data) => {
+			// Cannot specify both drop_highest and drop_lowest
+			return !(
+				data.drop_highest !== undefined && data.drop_lowest !== undefined
+			);
+		},
+		{
+			message: 'Cannot specify both drop_highest and drop_lowest',
+			path: ['drop_highest', 'drop_lowest'],
+		}
+	)
+	.refine(
+		(data) => {
+			// Cannot specify both keep and drop operations
+			const hasKeep = data.keep_highest !== undefined || data.keep_lowest !== undefined;
+			const hasDrop = data.drop_highest !== undefined || data.drop_lowest !== undefined;
+			return !(hasKeep && hasDrop);
+		},
+		{
+			message: 'Cannot specify both keep and drop operations',
+			path: ['keep_highest', 'keep_lowest', 'drop_highest', 'drop_lowest'],
 		}
 	)
 	.refine(
@@ -101,6 +139,38 @@ export const rollDiceSchema = z
 		{
 			message: 'keep_lowest cannot exceed dice_count',
 			path: ['keep_lowest'],
+		}
+	)
+	.refine(
+		(data) => {
+			// Drop values cannot exceed dice count
+			if (
+				data.drop_highest !== undefined &&
+				data.drop_highest >= data.dice_count
+			) {
+				return false;
+			}
+			return true;
+		},
+		{
+			message: 'drop_highest must be less than dice_count',
+			path: ['drop_highest'],
+		}
+	)
+	.refine(
+		(data) => {
+			// Drop values cannot exceed dice count
+			if (
+				data.drop_lowest !== undefined &&
+				data.drop_lowest >= data.dice_count
+			) {
+				return false;
+			}
+			return true;
+		},
+		{
+			message: 'drop_lowest must be less than dice_count',
+			path: ['drop_lowest'],
 		}
 	)
 	.refine(

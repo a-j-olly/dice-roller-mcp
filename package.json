@@ -9,6 +9,8 @@
 		"start": "node build/src/index.js",
 		"start:stdio": "node build/src/index.js --transport=stdio",
 		"start:http": "node build/src/index.js --transport=http",
+		"start:http:8080": "node build/src/index.js --http --port=8080",
+		"help": "node build/src/index.js --help",
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"coverage": "vitest run --coverage",
