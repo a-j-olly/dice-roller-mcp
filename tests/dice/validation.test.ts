@@ -88,11 +88,57 @@ describe('rollDiceSchema', () => {
 		expect(result.success).toBe(false);
 	});
 
+	test('rejects both drop_highest and drop_lowest', () => {
+		const invalidParams = {
+			dice_count: 4,
+			dice_sides: 6,
+			drop_highest: 1,
+			drop_lowest: 1,
+		};
+
+		const result = rollDiceSchema.safeParse(invalidParams);
+		expect(result.success).toBe(false);
+	});
+
+	test('rejects both keep and drop operations', () => {
+		const invalidParams = {
+			dice_count: 4,
+			dice_sides: 6,
+			keep_highest: 2,
+			drop_lowest: 1,
+		};
+
+		const result = rollDiceSchema.safeParse(invalidParams);
+		expect(result.success).toBe(false);
+	});
+
 	test('rejects keep_highest greater than dice_count', () => {
 		const invalidParams = {
 			dice_count: 3,
 			dice_sides: 6,
 			keep_highest: 4,
+		};
+
+		const result = rollDiceSchema.safeParse(invalidParams);
+		expect(result.success).toBe(false);
+	});
+
+	test('rejects drop_highest greater than or equal to dice_count', () => {
+		const invalidParams = {
+			dice_count: 3,
+			dice_sides: 6,
+			drop_highest: 3,
+		};
+
+		const result = rollDiceSchema.safeParse(invalidParams);
+		expect(result.success).toBe(false);
+	});
+
+	test('rejects drop_lowest greater than or equal to dice_count', () => {
+		const invalidParams = {
+			dice_count: 3,
+			dice_sides: 6,
+			drop_lowest: 4,
 		};
 
 		const result = rollDiceSchema.safeParse(invalidParams);

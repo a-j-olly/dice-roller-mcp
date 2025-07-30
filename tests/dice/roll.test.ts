@@ -7,6 +7,8 @@ import {
 	rollDice,
 	keepHighestDice,
 	keepLowestDice,
+	dropHighestDice,
+	dropLowestDice,
 	rerollDice,
 	explodeDice,
 	applyMinValue,
@@ -267,6 +269,60 @@ describe('rollDice', () => {
 		expect(result.description).toBe('Rolled 4d6, counting successes >= 4');
 	});
 
+	test('drop highest dice', () => {
+		const mockValues = [2 / 6, 4 / 6, 1 / 6, 5 / 6]; // will result in [3, 5, 2, 6]
+		let currentIndex = 0;
+		Math.random = vi.fn(
+			() => mockValues[currentIndex++]
+		) as unknown as () => number;
+
+		const params: RollDiceParams = {
+			dice_count: 4,
+			dice_sides: 6,
+			drop_highest: 2,
+		};
+
+		const result = rollDice(params);
+
+		// Dropped dice should be 5 and 6 (highest values)
+		// Kept dice should be 2 and 3 (lowest values)
+		expect(result.dice.filter((d) => d.kept).length).toBe(2);
+		expect(result.dice[0].kept).toBe(true); // 3
+		expect(result.dice[1].kept).toBe(false); // 5 (dropped)
+		expect(result.dice[2].kept).toBe(true); // 2
+		expect(result.dice[3].kept).toBe(false); // 6 (dropped)
+		expect(result.total).toBe(5); // 3 + 2
+		expect(result.operation).toBe('4d6dh2');
+		expect(result.description).toBe('Rolled 4d6, dropping highest 2');
+	});
+
+	test('drop lowest dice', () => {
+		const mockValues = [2 / 6, 4 / 6, 1 / 6, 5 / 6]; // will result in [3, 5, 2, 6]
+		let currentIndex = 0;
+		Math.random = vi.fn(
+			() => mockValues[currentIndex++]
+		) as unknown as () => number;
+
+		const params: RollDiceParams = {
+			dice_count: 4,
+			dice_sides: 6,
+			drop_lowest: 2,
+		};
+
+		const result = rollDice(params);
+
+		// Dropped dice should be 2 and 3 (lowest values)
+		// Kept dice should be 5 and 6 (highest values)
+		expect(result.dice.filter((d) => d.kept).length).toBe(2);
+		expect(result.dice[0].kept).toBe(false); // 3 (dropped)
+		expect(result.dice[1].kept).toBe(true); // 5
+		expect(result.dice[2].kept).toBe(false); // 2 (dropped)
+		expect(result.dice[3].kept).toBe(true); // 6
+		expect(result.total).toBe(11); // 5 + 6
+		expect(result.operation).toBe('4d6dl2');
+		expect(result.description).toBe('Rolled 4d6, dropping lowest 2');
+	});
+
 	test('combines multiple modifiers correctly', () => {
 		// Mock to get initial rolls of [1, 3, 1, 5], then rerolls of [2, 6]
 		const mockValues = [0, 2 / 6, 0, 4 / 6, 1 / 6, 5 / 6];
@@ -330,6 +386,12 @@ describe('utility functions', () => {
 			generateOperation({ dice_count: 3, dice_sides: 6, keep_lowest: 2 })
 		).toBe('3d6kl2');
 		expect(
+			generateOperation({ dice_count: 3, dice_sides: 6, drop_highest: 1 })
+		).toBe('3d6dh1');
+		expect(
+			generateOperation({ dice_count: 3, dice_sides: 6, drop_lowest: 1 })
+		).toBe('3d6dl1');
+		expect(
 			generateOperation({ dice_count: 3, dice_sides: 6, reroll: [1] })
 		).toBe('3d6r1');
 		expect(
@@ -374,6 +436,14 @@ describe('utility functions', () => {
 		expect(
 			generateDescription({ dice_count: 3, dice_sides: 6, keep_lowest: 2 })
 		).toBe('Rolled 3d6, keeping lowest 2');
+
+		expect(
+			generateDescription({ dice_count: 3, dice_sides: 6, drop_highest: 1 })
+		).toBe('Rolled 3d6, dropping highest 1');
+
+		expect(
+			generateDescription({ dice_count: 3, dice_sides: 6, drop_lowest: 1 })
+		).toBe('Rolled 3d6, dropping lowest 1');
 
 		expect(
 			generateDescription({ dice_count: 3, dice_sides: 6, reroll: [1] })
@@ -516,5 +586,37 @@ describe('helper functions', () => {
 		expect(result[1].special).toBeNull();
 		expect(result[2].value).toBe(2); // No change needed (already 2)
 		expect(result[2].special).toBeNull();
+	});
+
+	test('dropHighestDice correctly filters dice', () => {
+		const dice: DieResult[] = [
+			{ die: 1, sides: 6, rolls: [2], value: 2, kept: true, special: null },
+			{ die: 2, sides: 6, rolls: [5], value: 5, kept: true, special: null },
+			{ die: 3, sides: 6, rolls: [1], value: 1, kept: true, special: null },
+			{ die: 4, sides: 6, rolls: [4], value: 4, kept: true, special: null },
+		];
+
+		const result = dropHighestDice(dice, 2);
+
+		expect(result[0].kept).toBe(true); // 2 (kept)
+		expect(result[1].kept).toBe(false); // 5 (dropped)
+		expect(result[2].kept).toBe(true); // 1 (kept)
+		expect(result[3].kept).toBe(false); // 4 (dropped)
+	});
+
+	test('dropLowestDice correctly filters dice', () => {
+		const dice: DieResult[] = [
+			{ die: 1, sides: 6, rolls: [2], value: 2, kept: true, special: null },
+			{ die: 2, sides: 6, rolls: [5], value: 5, kept: true, special: null },
+			{ die: 3, sides: 6, rolls: [1], value: 1, kept: true, special: null },
+			{ die: 4, sides: 6, rolls: [4], value: 4, kept: true, special: null },
+		];
+
+		const result = dropLowestDice(dice, 2);
+
+		expect(result[0].kept).toBe(false); // 2 (dropped)
+		expect(result[1].kept).toBe(true); // 5 (kept)
+		expect(result[2].kept).toBe(false); // 1 (dropped)
+		expect(result[3].kept).toBe(true); // 4 (kept)
 	});
 });

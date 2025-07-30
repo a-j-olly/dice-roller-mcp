@@ -20,7 +20,7 @@ const config = {
 	// Log errors, warnings and info by default
 	minLevel: process.env.LOG_LEVEL
 		? (process.env.LOG_LEVEL.toUpperCase() as keyof typeof LogLevel)
-		: LogLevel.ERROR, // Changed default to ERROR for production
+		: LogLevel.INFO, // Changed default to INFO for better visibility
 
 	// Include timestamp in logs
 	includeTimestamp: true,

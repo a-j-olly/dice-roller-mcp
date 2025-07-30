@@ -44,6 +44,8 @@ export function rollDice(params: RollDiceParams): RollResult {
 		modifier = 0,
 		keep_highest,
 		keep_lowest,
+		drop_highest,
+		drop_lowest,
 		reroll = [],
 		exploding = false,
 		target_number,
@@ -77,11 +79,15 @@ export function rollDice(params: RollDiceParams): RollResult {
 		dice = applyMinValue(dice, min_value);
 	}
 
-	// Apply keep highest/lowest if specified
+	// Apply keep highest/lowest or drop highest/lowest if specified
 	if (keep_highest !== undefined) {
 		dice = keepHighestDice(dice, keep_highest);
 	} else if (keep_lowest !== undefined) {
 		dice = keepLowestDice(dice, keep_lowest);
+	} else if (drop_highest !== undefined) {
+		dice = dropHighestDice(dice, drop_highest);
+	} else if (drop_lowest !== undefined) {
+		dice = dropLowestDice(dice, drop_lowest);
 	}
 
 	// Set the final value for each die based on the last roll or minimum value if applied
@@ -193,6 +199,62 @@ export function keepLowestDice(dice: DieResult[], count: number): DieResult[] {
 		return {
 			...die,
 			kept: sortedIndex < count,
+		};
+	});
+}
+
+/**
+ * Applies the "drop highest" rule to dice results.
+ * @param dice Array of dice results
+ * @param count Number of highest dice to drop
+ * @returns Updated dice array
+ */
+export function dropHighestDice(dice: DieResult[], count: number): DieResult[] {
+	// Sort by value (highest first)
+	const sortedDice = [...dice].sort(
+		(a, b) => Math.max(...b.rolls) - Math.max(...a.rolls)
+	);
+
+	// Mark dice to keep or drop
+	return dice.map((die) => {
+		const sortedIndex = sortedDice.findIndex(
+			(d) =>
+				d.die === die.die &&
+				d.sides === die.sides &&
+				d.rolls.every((r, i) => r === die.rolls[i])
+		);
+
+		return {
+			...die,
+			kept: sortedIndex >= count, // Keep if NOT in the top 'count' dice
+		};
+	});
+}
+
+/**
+ * Applies the "drop lowest" rule to dice results.
+ * @param dice Array of dice results
+ * @param count Number of lowest dice to drop
+ * @returns Updated dice array
+ */
+export function dropLowestDice(dice: DieResult[], count: number): DieResult[] {
+	// Sort by value (lowest first)
+	const sortedDice = [...dice].sort(
+		(a, b) => Math.max(...a.rolls) - Math.max(...b.rolls)
+	);
+
+	// Mark dice to keep or drop
+	return dice.map((die) => {
+		const sortedIndex = sortedDice.findIndex(
+			(d) =>
+				d.die === die.die &&
+				d.sides === die.sides &&
+				d.rolls.every((r, i) => r === die.rolls[i])
+		);
+
+		return {
+			...die,
+			kept: sortedIndex >= count, // Keep if NOT in the bottom 'count' dice
 		};
 	});
 }
@@ -310,6 +372,8 @@ export function generateOperation(params: RollDiceParams): string {
 		modifier,
 		keep_highest,
 		keep_lowest,
+		drop_highest,
+		drop_lowest,
 		reroll,
 		exploding,
 		target_number,
@@ -323,6 +387,10 @@ export function generateOperation(params: RollDiceParams): string {
 		operation += `kh${keep_highest}`;
 	} else if (keep_lowest !== undefined) {
 		operation += `kl${keep_lowest}`;
+	} else if (drop_highest !== undefined) {
+		operation += `dh${drop_highest}`;
+	} else if (drop_lowest !== undefined) {
+		operation += `dl${drop_lowest}`;
 	}
 
 	if (reroll && reroll.length > 0) {
@@ -361,6 +429,8 @@ export function generateDescription(params: RollDiceParams): string {
 		modifier,
 		keep_highest,
 		keep_lowest,
+		drop_highest,
+		drop_lowest,
 		reroll,
 		exploding,
 		target_number,
@@ -374,6 +444,10 @@ export function generateDescription(params: RollDiceParams): string {
 		description += `, keeping highest ${keep_highest}`;
 	} else if (keep_lowest !== undefined) {
 		description += `, keeping lowest ${keep_lowest}`;
+	} else if (drop_highest !== undefined) {
+		description += `, dropping highest ${drop_highest}`;
+	} else if (drop_lowest !== undefined) {
+		description += `, dropping lowest ${drop_lowest}`;
 	}
 
 	if (reroll && reroll.length > 0) {

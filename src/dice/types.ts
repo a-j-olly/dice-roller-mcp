@@ -11,6 +11,8 @@ export interface RollDiceParams {
 	modifier?: number; // Number to add/subtract from final sum
 	keep_highest?: number; // Number of highest dice to keep
 	keep_lowest?: number; // Number of lowest dice to keep
+	drop_highest?: number; // Number of highest dice to drop
+	drop_lowest?: number; // Number of lowest dice to drop
 	reroll?: number[]; // Array of values that trigger a single reroll
 	exploding?: boolean; // Whether dice explode on maximum value
 	target_number?: number; // If set, count successes >= this number instead of sum
