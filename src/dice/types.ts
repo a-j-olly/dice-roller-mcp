@@ -89,3 +89,36 @@ export interface ErrorResponse {
 		details: ErrorDetail[];
 	};
 }
+
+/**
+ * MCP tool response content.
+ */
+export interface McpToolContent {
+	type: 'text';
+	text: string;
+}
+
+/**
+ * MCP tool response result.
+ */
+export interface McpToolResult {
+	content: McpToolContent[];
+}
+
+/**
+ * MCP error response.
+ */
+export interface McpError {
+	code: number;
+	message: string;
+}
+
+/**
+ * MCP JSON-RPC response.
+ */
+export interface McpResponse {
+	result?: McpToolResult;
+	error?: McpError;
+	jsonrpc: '2.0';
+	id: number;
+}

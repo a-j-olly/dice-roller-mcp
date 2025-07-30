@@ -1,6 +1,6 @@
 /**
  * Minimal logging utilities for the dice rolling server.
- * Only logs errors and critical issues to keep logs clean.
+ * All logs go to stderr to avoid interfering with stdout MCP communication.
  */
 
 /**
@@ -20,13 +20,10 @@ const config = {
 	// Log errors, warnings and info by default
 	minLevel: process.env.LOG_LEVEL
 		? (process.env.LOG_LEVEL.toUpperCase() as keyof typeof LogLevel)
-		: LogLevel.INFO,
+		: LogLevel.ERROR, // Changed default to ERROR for production
 
 	// Include timestamp in logs
 	includeTimestamp: true,
-
-	// Output to stderr for errors and warnings, stdout for others
-	useStderr: true,
 };
 
 /**
@@ -79,15 +76,25 @@ function formatLogMessage(
 }
 
 /**
+ * Log a message to stderr (all logs go to stderr to avoid interfering with MCP stdout)
+ * @param level Log level
+ * @param message Message to log
+ * @param args Additional context
+ */
+function log(level: LogLevel, message: string, ...args: any[]): void {
+	if (shouldLog(level)) {
+		const formattedMessage = formatLogMessage(level, message, args);
+		console.error(formattedMessage);
+	}
+}
+
+/**
  * Log an error message
  * @param message Error message
  * @param args Additional context
  */
 export function error(message: string, ...args: any[]): void {
-	if (shouldLog(LogLevel.ERROR)) {
-		const formattedMessage = formatLogMessage(LogLevel.ERROR, message, args);
-		console.error(formattedMessage);
-	}
+	log(LogLevel.ERROR, message, ...args);
 }
 
 /**
@@ -96,38 +103,25 @@ export function error(message: string, ...args: any[]): void {
  * @param args Additional context
  */
 export function warn(message: string, ...args: any[]): void {
-	if (shouldLog(LogLevel.WARN)) {
-		const formattedMessage = formatLogMessage(LogLevel.WARN, message, args);
-		if (config.useStderr) {
-			console.error(formattedMessage);
-		} else {
-			console.warn(formattedMessage);
-		}
-	}
+	log(LogLevel.WARN, message, ...args);
 }
 
 /**
- * Log an info message (disabled by default)
+ * Log an info message
  * @param message Info message
  * @param args Additional context
  */
 export function info(message: string, ...args: any[]): void {
-	if (shouldLog(LogLevel.INFO)) {
-		const formattedMessage = formatLogMessage(LogLevel.INFO, message, args);
-		console.info(formattedMessage);
-	}
+	log(LogLevel.INFO, message, ...args);
 }
 
 /**
- * Log a debug message (disabled by default)
+ * Log a debug message
  * @param message Debug message
  * @param args Additional context
  */
 export function debug(message: string, ...args: any[]): void {
-	if (shouldLog(LogLevel.DEBUG)) {
-		const formattedMessage = formatLogMessage(LogLevel.DEBUG, message, args);
-		console.debug(formattedMessage);
-	}
+	log(LogLevel.DEBUG, message, ...args);
 }
 
 /**
