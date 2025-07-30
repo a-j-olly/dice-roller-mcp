@@ -131,7 +131,7 @@ export function rollDice(params: RollDiceParams): RollResult {
 	// Generate operation notation and description
 	const operation = generateOperation(params);
 	const description = generateDescription(params);
-
+	logger.info('Dice result: ', total);
 	return {
 		total,
 		...(successes !== undefined ? { successes, total_dice } : {}),

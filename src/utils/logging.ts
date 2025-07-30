@@ -17,10 +17,10 @@ export enum LogLevel {
  * Logging configuration
  */
 const config = {
-	// Only log errors and warnings by default
+	// Log errors, warnings and info by default
 	minLevel: process.env.LOG_LEVEL
 		? (process.env.LOG_LEVEL.toUpperCase() as keyof typeof LogLevel)
-		: LogLevel.ERROR,
+		: LogLevel.INFO,
 
 	// Include timestamp in logs
 	includeTimestamp: true,
