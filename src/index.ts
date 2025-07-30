@@ -5,6 +5,7 @@
  * with the appropriate transport (stdio or HTTP).
  */
 import { startStdioServer } from './transports/stdio.js';
+import { startHttpServer } from './transports/http.js';
 import { logger } from './utils/logging.js';
 
 // Define supported transport types
@@ -64,9 +65,7 @@ async function main() {
 				await startStdioServer();
 				break;
 			case 'http':
-				// HTTP transport will be implemented in a future step
-				logger.error('HTTP transport not yet implemented');
-				process.exit(1);
+				await startHttpServer();
 				break;
 		}
 	} catch (error) {
