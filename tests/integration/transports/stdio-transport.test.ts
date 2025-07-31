@@ -23,8 +23,25 @@ describe('Stdio Transport Integration', () => {
 			stdio: ['pipe', 'pipe', 'pipe']
 		});
 
-		// Wait for server to start
-		await new Promise(resolve => setTimeout(resolve, 2000));
+		// Wait for server to be ready by watching stderr for the ready message
+		await new Promise<void>((resolve, reject) => {
+			const timeout = setTimeout(() => {
+				reject(new Error('Server failed to start within 5 seconds'));
+			}, 5000);
+
+			serverProcess.stderr!.on('data', (data) => {
+				const output = data.toString();
+				if (output.includes('Stdio transport created and connected to server')) {
+					clearTimeout(timeout);
+					resolve();
+				}
+			});
+
+			serverProcess.on('error', (error) => {
+				clearTimeout(timeout);
+				reject(error);
+			});
+		});
 	});
 
 	afterEach(() => {
@@ -38,22 +55,50 @@ describe('Stdio Transport Integration', () => {
 	 */
 	async function sendRequest(request: any): Promise<McpResponse> {
 		return new Promise((resolve, reject) => {
+			let resolved = false;
+			
 			const timeout = setTimeout(() => {
-				reject(new Error('Request timed out'));
-			}, 5000);
-
-			serverProcess.stdin!.write(JSON.stringify(request) + '\n');
-
-			serverProcess.stdout!.once('data', (data) => {
-				try {
-					const response = JSON.parse(data.toString().trim());
-					clearTimeout(timeout);
-					resolve(response);
-				} catch (error) {
-					clearTimeout(timeout);
-					reject(new Error(`Failed to parse response: ${error}`));
+				if (!resolved) {
+					resolved = true;
+					reject(new Error('Request timed out'));
 				}
-			});
+			}, 2000); // Reduced from 5000ms to 2000ms
+
+			const onData = (data: Buffer) => {
+				if (resolved) return;
+				
+				try {
+					const responseText = data.toString().trim();
+					// Handle multiple JSON objects on separate lines
+					const lines = responseText.split('\n').filter(line => line.trim());
+					
+					for (const line of lines) {
+						try {
+							const response = JSON.parse(line);
+							// Make sure this response matches our request ID
+							if (response.id === request.id || response.id === null) {
+								resolved = true;
+								clearTimeout(timeout);
+								serverProcess.stdout!.off('data', onData);
+								resolve(response);
+								return;
+							}
+						} catch (parseError) {
+							// Continue trying other lines
+						}
+					}
+				} catch (error) {
+					if (!resolved) {
+						resolved = true;
+						clearTimeout(timeout);
+						serverProcess.stdout!.off('data', onData);
+						reject(new Error(`Failed to parse response: ${error}`));
+					}
+				}
+			};
+
+			serverProcess.stdout!.on('data', onData);
+			serverProcess.stdin!.write(JSON.stringify(request) + '\n');
 		});
 	}
 
