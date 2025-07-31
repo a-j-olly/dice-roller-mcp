@@ -35,4 +35,8 @@ Thumbs.db
 /coverage
 
 # Cursor
-.cursor
+.cursor/docs
+.cursor/mcp.json
+
+# Claude
+.claude
