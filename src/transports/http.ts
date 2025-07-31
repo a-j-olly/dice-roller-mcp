@@ -99,14 +99,12 @@ export async function createHttpTransport(port: number = 3000): Promise<FastifyI
       connectedAt: Date.now(),
       endpoint
     };
-    logger.info(`Client ${clientId} connected via ${endpoint} (${Object.keys(activeClientsStore).length}/${MAX_CLIENTS} active)`);
   }
 
   // Helper function to remove client from active connections
   function removeActiveClient(clientId: string): void {
     if (activeClientsStore[clientId]) {
       delete activeClientsStore[clientId];
-      logger.info(`Client ${clientId} disconnected (${Object.keys(activeClientsStore).length}/${MAX_CLIENTS} active)`);
     }
   }
 
@@ -127,7 +125,6 @@ export async function createHttpTransport(port: number = 3000): Promise<FastifyI
       // Remove clients that haven't been active for 5 minutes
       if (now - activeClientsStore[clientId].connectedAt > 300000) {
         delete activeClientsStore[clientId];
-        logger.info(`Removed stale client connection: ${clientId}`);
       }
     });
   }, 60000); // Clean up every minute
@@ -137,7 +134,6 @@ export async function createHttpTransport(port: number = 3000): Promise<FastifyI
 
   // Health check endpoint
   fastify.get('/health', async (request: FastifyRequest, reply: FastifyReply) => {
-    logger.info(`Health check request from ${getClientId(request)}`);
     return { status: 'ok', timestamp: new Date().toISOString() };
   });
 
@@ -405,30 +401,20 @@ export async function createHttpTransport(port: number = 3000): Promise<FastifyI
  */
 export async function startHttpServer(port: number = 3000): Promise<void> {
   try {
-    logger.info('Creating HTTP transport...');
     const fastify = await createHttpTransport(port);
-    logger.info('HTTP transport created successfully');
 
     // Start the server
-    logger.info(`Starting server on port ${port}...`);
     await fastify.listen({ port, host: '0.0.0.0' });
 
     logger.info(`HTTP server started on port ${port}`);
-    logger.info(`Health check: http://localhost:${port}/health`);
-    logger.info(`SSE endpoint: http://localhost:${port}/events`);
-    logger.info(`JSON-RPC endpoint: http://localhost:${port}/rpc`);
-    logger.info('Server is ready to accept connections');
-    logger.info('Following Fastify best practices with proper error handling and rate limiting');
 
     // Setup graceful shutdown
     process.on('SIGINT', async () => {
-      logger.info('Received SIGINT signal, shutting down HTTP server...');
       await fastify.close();
       process.exit(0);
     });
 
     process.on('SIGTERM', async () => {
-      logger.info('Received SIGTERM signal, shutting down HTTP server...');
       await fastify.close();
       process.exit(0);
     });

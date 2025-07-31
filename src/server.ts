@@ -14,16 +14,13 @@ import { logger } from './utils/logging.js';
  * @returns A configured MCP server instance
  */
 export function createDiceRollingServer(): McpServer {
-  // Create the server with dice rolling capabilities
   const server = new McpServer({
     name: 'Dice Rolling Server',
     version: '1.0.0'
   });
 
-  // Add the roll_dice tool
   server.tool(
     'roll_dice',
-    // Define the parameters schema using zod
     {
       dice_count: z.number().int().min(1).max(1000),
       dice_sides: z.number().int().min(1).max(100),
@@ -37,21 +34,17 @@ export function createDiceRollingServer(): McpServer {
       target_number: z.number().int().positive().optional(),
       min_value: z.number().int().positive().optional()
     },
-    // Implement the tool handler with correct signature
     async (args, extra) => {
       try {
-        // Validate parameters
         const validationResult = validateRollDiceParams(args);
         if (!validationResult.success) {
           logger.error('Invalid parameters for roll_dice', validationResult.errors);
           return handleError('Invalid parameters provided', validationResult.errors);
         }
 
-        // Perform the dice roll
         const result = rollDice(validationResult.data);
         const timestamp = new Date().toISOString();
 
-        // Return the result
         return {
           content: [{
             type: 'text' as const,
@@ -74,10 +67,8 @@ export function createDiceRollingServer(): McpServer {
     }
   );
 
-  // Add the roll_multiple tool
   server.tool(
     'roll_multiple',
-    // Define the parameters schema using zod
     {
       rolls: z.array(z.object({
         dice_count: z.number().int().min(1).max(1000),
@@ -94,10 +85,8 @@ export function createDiceRollingServer(): McpServer {
       })).min(1, { message: 'Must include at least one roll configuration' }),
       count: z.number().int().positive().optional()
     },
-    // Implement the tool handler with correct signature
     async (args, extra) => {
       try {
-        // Validate parameters
         const validationResult = validateRollMultipleParams(args);
         if (!validationResult.success) {
           logger.error('Invalid parameters for roll_multiple', validationResult.errors);
@@ -108,7 +97,6 @@ export function createDiceRollingServer(): McpServer {
         const count = validatedParams.count || 1;
         const results = [];
 
-        // Perform all the dice rolls
         for (let i = 0; i < count; i++) {
           for (const rollParams of validatedParams.rolls) {
             results.push(rollDice(rollParams));
@@ -117,7 +105,6 @@ export function createDiceRollingServer(): McpServer {
 
         const timestamp = new Date().toISOString();
 
-        // Return the results
         return {
           content: [{
             type: 'text' as const,

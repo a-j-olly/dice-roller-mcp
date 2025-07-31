@@ -1,6 +1,6 @@
 {
 	"name": "dice-roller-mcp",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "An MCP server that provides dice rolling functionality for tabletop RPG sessions",
 	"main": "build/index.js",
 	"type": "module",

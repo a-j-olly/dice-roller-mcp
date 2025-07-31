@@ -25,8 +25,7 @@ export function createStdioTransport(): StdioServerTransport {
 		};
 
 		transport.onclose = () => {
-			logger.info('Stdio transport closed');
-			// Clean exit when transport is closed
+				// Clean exit when transport is closed
 			process.exit(0);
 		};
 
@@ -46,25 +45,17 @@ export function createStdioTransport(): StdioServerTransport {
  * Starts the dice rolling server with stdio transport.
  * This function initializes the transport and starts listening for stdin/stdout communication.
  */
-/**
- * Starts the dice rolling server with stdio transport.
- * This function initializes the transport and starts listening for stdin/stdout communication.
- */
 export async function startStdioServer(): Promise<void> {
 	try {
 		const transport = createStdioTransport();
 
-		// Log server startup
-		logger.info('Starting dice rolling server with stdio transport');
 
 		// Setup signal handlers for graceful shutdown
 		process.on('SIGINT', async () => {
-			logger.info('Received SIGINT signal, shutting down server...');
 			await transport.close();
 		});
 
 		process.on('SIGTERM', async () => {
-			logger.info('Received SIGTERM signal, shutting down server...');
 			await transport.close();
 		});
 
