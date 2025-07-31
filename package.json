@@ -1,5 +1,5 @@
 {
-	"name": "dice-roller-mcp-server",
+	"name": "dice-roller-mcp",
 	"version": "1.0.0",
 	"description": "An MCP server that provides dice rolling functionality for tabletop RPG sessions",
 	"main": "build/index.js",
@@ -19,8 +19,8 @@
 		"test:watch:unit": "vitest tests/unit",
 		"test:watch:integration": "vitest tests/integration",
 		"coverage": "vitest run --coverage",
-		"docker:build": "docker build -t dice-roller-mcp-server .",
-		"docker:run": "docker run -p 3000:3000 dice-roller-mcp-server"
+		"docker:build": "docker build -t dice-roller-mcp .",
+		"docker:run": "docker run -p 3000:3000 dice-roller-mcp"
 	},
 	"keywords": [
 		"mcp",
