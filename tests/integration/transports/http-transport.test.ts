@@ -3,25 +3,24 @@
  * Tests the HTTP/SSE server endpoints and JSON-RPC communication.
  */
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
-import { spawn, type ChildProcess } from 'child_process';
+import { createHttpTransport } from '../../../src/transports/http.js';
+import type { FastifyInstance } from 'fastify';
 
 describe('HTTP Transport Integration', () => {
-	let serverProcess: ChildProcess;
+	let server: FastifyInstance;
 	const testPort = 8888; // Use a different port to avoid conflicts
 
 	beforeEach(async () => {
-		// Start the HTTP server as a subprocess on test port
-		serverProcess = spawn('node', ['build/src/index.js', '--http', `--port=${testPort}`], {
-			stdio: ['pipe', 'pipe', 'pipe']
-		});
-
-		// Wait for server to start
-		await new Promise(resolve => setTimeout(resolve, 3000));
+		// Create HTTP transport directly in-process (much faster!)
+		server = await createHttpTransport(testPort);
+		
+		// Start listening
+		await server.listen({ port: testPort, host: '127.0.0.1' });
 	});
 
-	afterEach(() => {
-		if (serverProcess) {
-			serverProcess.kill();
+	afterEach(async () => {
+		if (server) {
+			await server.close();
 		}
 	});
 
