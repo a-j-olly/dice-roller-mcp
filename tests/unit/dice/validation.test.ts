@@ -7,8 +7,8 @@ import {
 	rollMultipleSchema,
 	validateRollDiceParams,
 	validateRollMultipleParams,
-} from '../../src/dice/validation.js';
-import { RollDiceParams, RollMultipleParams } from '../../src/dice/types.js';
+} from '../../../src/dice/validation.js';
+import { RollDiceParams, RollMultipleParams } from '../../../src/dice/types.js';
 
 describe('rollDiceSchema', () => {
 	test('validates a valid basic roll', () => {

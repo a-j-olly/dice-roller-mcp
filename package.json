@@ -1,5 +1,5 @@
 {
-	"name": "dice-roller-mcp-server",
+	"name": "dice-roller-mcp",
 	"version": "1.0.0",
 	"description": "An MCP server that provides dice rolling functionality for tabletop RPG sessions",
 	"main": "build/index.js",
@@ -10,13 +10,17 @@
 		"start:stdio": "node build/src/index.js --transport=stdio",
 		"start:http": "node build/src/index.js --transport=http",
 		"start:http:8080": "node build/src/index.js --http --port=8080",
+		"debug": "npx -y @modelcontextprotocol/inspector node build/src/index.js --transport=stdio --debug",
 		"help": "node build/src/index.js --help",
 		"test": "vitest run",
+		"test:unit": "vitest run tests/unit",
+		"test:integration": "vitest run tests/integration",
 		"test:watch": "vitest",
+		"test:watch:unit": "vitest tests/unit",
+		"test:watch:integration": "vitest tests/integration",
 		"coverage": "vitest run --coverage",
-		"test:integration": "vitest run tests/server.test.ts",
-		"docker:build": "docker build -t dice-roller-mcp-server .",
-		"docker:run": "docker run -p 3000:3000 dice-roller-mcp-server"
+		"docker:build": "docker build -t dice-roller-mcp .",
+		"docker:run": "docker run -p 3000:3000 dice-roller-mcp"
 	},
 	"keywords": [
 		"mcp",

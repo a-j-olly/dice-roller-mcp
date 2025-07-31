@@ -6,7 +6,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { rollDice } from './dice/roll.js';
 import { validateRollDiceParams, validateRollMultipleParams } from './dice/validation.js';
-import { RollDiceParams, RollMultipleParams, ErrorResponse } from './dice/types.js';
+import { ErrorResponse } from './dice/types.js';
 import { logger } from './utils/logging.js';
 
 /**
