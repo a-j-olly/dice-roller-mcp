@@ -7,9 +7,11 @@ An MCP (Model Context Protocol) server that provides dice rolling functionality 
 ### Tools
 
 #### `roll_dice`
+
 Roll dice with advanced modifiers and options.
 
 **Parameters:**
+
 - `dice_count` (required): Number of dice to roll (1-1000)
 - `dice_sides` (required): Number of sides per die (1-100)
 - `modifier` (optional): Number to add/subtract from total
@@ -24,6 +26,7 @@ Roll dice with advanced modifiers and options.
 - `label` (optional): Text label for the roll
 
 **Examples:**
+
 - Standard: `3d6`, `1d20+5`
 - D&D Advantage: `2d20kh1` (keep highest)
 - Ability Scores: `4d6dl1` (drop lowest)
@@ -32,6 +35,7 @@ Roll dice with advanced modifiers and options.
 - Success Counting: `5d10≥6` (World of Darkness style)
 
 **Example Result:**
+
 ```json
 {
   "result": {
@@ -53,18 +57,22 @@ Roll dice with advanced modifiers and options.
 ```
 
 #### `roll_multiple`
+
 Perform multiple dice rolls in a single operation.
 
 **Parameters:**
+
 - `rolls` (required): Array of roll configurations (each using `roll_dice` parameters)
 - `count` (optional): Number of times to repeat the entire set
 
 **Use Cases:**
+
 - Attack + damage rolls
 - Character generation (multiple ability scores)
 - Complex spell effects with multiple components
 
 **Example Result:**
+
 ```json
 {
   "results": [
@@ -121,7 +129,7 @@ Add this configuration to your Claude Desktop config file (`~/Library/Applicatio
   "mcpServers": {
     "dice-roller": {
       "command": "node",
-      "args": ["/path/to/dice-roller-mcp/build/src/index.js", "--transport=stdio"],
+      "args": ["/path/to/dice-roller-mcp/dist/index.js", "--transport=stdio"],
       "env": {}
     }
   }
@@ -145,7 +153,7 @@ Add to your Continue config file (`~/.continue/config.json`):
   "mcpServers": {
     "dice-roller": {
       "command": "node",
-      "args": ["/path/to/dice-roller-mcp/build/src/index.js", "--transport=stdio"]
+      "args": ["/path/to/dice-roller-mcp/dist/index.js", "--transport=stdio"]
     }
   }
 }
@@ -160,7 +168,7 @@ Add to your VS Code settings.json:
   "cline.mcpServers": {
     "dice-roller": {
       "command": "node",
-      "args": ["/path/to/dice-roller-mcp/build/src/index.js", "--transport=stdio"]
+      "args": ["/path/to/dice-roller-mcp/dist/index.js", "--transport=stdio"]
     }
   }
 }
@@ -172,14 +180,14 @@ For any MCP client that supports stdio transport:
 
 ```bash
 # Start the server
-node /path/to/dice-roller-mcp/build/src/index.js --transport=stdio
+node /path/to/dice-roller-mcp/dist/index.js --transport=stdio
 ```
 
 For HTTP transport:
 
 ```bash
 # Start HTTP server on port 3000
-node /path/to/dice-roller-mcp/build/src/index.js --transport=http --port=3000
+node /path/to/dice-roller-mcp/dist/index.js --transport=http --port=3000
 
 # Connect to: http://localhost:3000/rpc
 # SSE endpoint: http://localhost:3000/events

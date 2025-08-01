@@ -27,8 +27,8 @@ The server supports flexible command-line arguments:
 
 Examples:
 
-- `node build/src/index.js --http --port=8080`
-- `node build/src/index.js --transport=stdio`
+- `node dist/index.js --http --port=8080`
+- `node dist/index.js --transport=stdio`
 
 ### Testing
 

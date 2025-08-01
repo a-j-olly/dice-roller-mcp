@@ -33,7 +33,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 # Copy built application from builder stage
-COPY --from=builder /app/build ./build
+COPY --from=builder /app/dist ./dist
 
 # Change ownership to non-root user
 RUN chown -R mcp:nodejs /app
@@ -43,4 +43,4 @@ USER mcp
 EXPOSE 3000
 
 # Default command runs HTTP transport on port 3000
-CMD ["node", "build/src/index.js", "--transport=http", "--port=3000"]
+CMD ["node", "dist/index.js", "--transport=http", "--port=3000"]
