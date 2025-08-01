@@ -288,6 +288,31 @@ describe('Stdio Transport Integration', () => {
 			expect(keptDice).toHaveLength(3);
 		});
 
+		test('roll with label', async () => {
+			const request = {
+				jsonrpc: '2.0' as const,
+				method: 'tools/call',
+				params: {
+					name: 'roll_dice',
+					arguments: {
+						dice_count: 1,
+						dice_sides: 20,
+						modifier: 5,
+						label: 'Initiative Roll'
+					}
+				},
+				id: 8
+			};
+
+			const response = await sendRequest(request);
+			const diceResult = extractDiceResult(response) as DiceRollResponse;
+
+			expect(diceResult.result.operation).toBe('1d20+5');
+			expect(diceResult.result.description).toBe('Rolled 1d20, adding 5');
+			expect(diceResult.result.label).toBe('Initiative Roll');
+			expect(diceResult.result.dice).toHaveLength(1);
+		});
+
 		test('drop lowest dice', async () => {
 			const request = {
 				jsonrpc: '2.0' as const,
@@ -300,7 +325,7 @@ describe('Stdio Transport Integration', () => {
 						drop_lowest: 1
 					}
 				},
-				id: 8
+				id: 9
 			};
 
 			const response = await sendRequest(request);
@@ -390,7 +415,7 @@ describe('Stdio Transport Integration', () => {
 	});
 
 	describe('roll_multiple tool', () => {
-		test('multiple dice rolls', async () => {
+		test('multiple dice rolls with labels', async () => {
 			const request = {
 				jsonrpc: '2.0' as const,
 				method: 'tools/call',
@@ -398,20 +423,22 @@ describe('Stdio Transport Integration', () => {
 					name: 'roll_multiple',
 					arguments: {
 						rolls: [
-							{ dice_count: 1, dice_sides: 20 },
-							{ dice_count: 2, dice_sides: 6 }
+							{ dice_count: 1, dice_sides: 20, modifier: 8, label: 'Attack Roll' },
+							{ dice_count: 2, dice_sides: 6, modifier: 3, label: 'Damage Roll' }
 						]
 					}
 				},
-				id: 8
+				id: 12
 			};
 
 			const response = await sendRequest(request);
 			const diceResult = extractDiceResult(response) as MultipleRollResponse;
 
 			expect(diceResult.results).toHaveLength(2);
-			expect(diceResult.results[0].operation).toBe('1d20');
-			expect(diceResult.results[1].operation).toBe('2d6');
+			expect(diceResult.results[0].operation).toBe('1d20+8');
+			expect(diceResult.results[0].label).toBe('Attack Roll');
+			expect(diceResult.results[1].operation).toBe('2d6+3');
+			expect(diceResult.results[1].label).toBe('Damage Roll');
 			expect(diceResult.results[0].dice).toHaveLength(1);
 			expect(diceResult.results[1].dice).toHaveLength(2);
 		});
