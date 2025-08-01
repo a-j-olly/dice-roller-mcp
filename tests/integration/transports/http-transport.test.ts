@@ -131,17 +131,17 @@ describe('HTTP Transport Integration', () => {
 			expect(keptDice).toHaveLength(3);
 		});
 
-		test('should handle roll_multiple tool', async () => {
+		test('should handle dice roll with label', async () => {
 			const request = {
 				jsonrpc: '2.0',
 				method: 'tools/call',
 				params: {
-					name: 'roll_multiple',
+					name: 'roll_dice',
 					arguments: {
-						rolls: [
-							{ dice_count: 1, dice_sides: 20 },
-							{ dice_count: 1, dice_sides: 4 }
-						]
+						dice_count: 1,
+						dice_sides: 20,
+						modifier: 3,
+						label: 'Stealth Check'
 					}
 				},
 				id: 3
@@ -153,9 +153,38 @@ describe('HTTP Transport Integration', () => {
 			const data = await response.json();
 			const diceResult = JSON.parse(data.result.content[0].text);
 			
+			expect(diceResult.result.operation).toBe('1d20+3');
+			expect(diceResult.result.label).toBe('Stealth Check');
+			expect(diceResult.result.dice).toHaveLength(1);
+		});
+
+		test('should handle roll_multiple tool with labels', async () => {
+			const request = {
+				jsonrpc: '2.0',
+				method: 'tools/call',
+				params: {
+					name: 'roll_multiple',
+					arguments: {
+						rolls: [
+							{ dice_count: 1, dice_sides: 20, label: 'Attack' },
+							{ dice_count: 1, dice_sides: 4, label: 'Damage' }
+						]
+					}
+				},
+				id: 6
+			};
+
+			const response = await makeHttpRequest('/rpc', 'POST', request);
+			
+			expect(response.status).toBe(200);
+			const data = await response.json();
+			const diceResult = JSON.parse(data.result.content[0].text);
+			
 			expect(diceResult.results).toHaveLength(2);
 			expect(diceResult.results[0].operation).toBe('1d20');
+			expect(diceResult.results[0].label).toBe('Attack');
 			expect(diceResult.results[1].operation).toBe('1d4');
+			expect(diceResult.results[1].label).toBe('Damage');
 		});
 
 		test('should return error for invalid parameters', async () => {
@@ -169,7 +198,7 @@ describe('HTTP Transport Integration', () => {
 						dice_sides: 6
 					}
 				},
-				id: 4
+				id: 6
 			};
 
 			const response = await makeHttpRequest('/rpc', 'POST', request);
@@ -189,7 +218,7 @@ describe('HTTP Transport Integration', () => {
 					name: 'unknown_tool',
 					arguments: {}
 				},
-				id: 5
+				id: 6
 			};
 
 			const response = await makeHttpRequest('/rpc', 'POST', request);

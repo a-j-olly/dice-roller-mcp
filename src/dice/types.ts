@@ -17,6 +17,7 @@ export interface RollDiceParams {
 	exploding?: boolean; // Whether dice explode on maximum value
 	target_number?: number; // If set, count successes >= this number instead of sum
 	min_value?: number; // Minimum value for any individual die
+	label?: string; // Optional label to help clients track roll context
 }
 
 /**
@@ -49,6 +50,7 @@ export interface RollResult {
 	dice: DieResult[]; // Details of individual dice
 	operation: string; // The operation performed in standard notation
 	description: string; // Human-readable description of the roll
+	label?: string; // Optional label to help clients track roll context
 }
 
 /**

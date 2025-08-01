@@ -72,6 +72,7 @@ export const rollDiceSchema = z
 				message: 'Must be a positive integer',
 			})
 			.optional(),
+		label: z.string().optional(),
 	})
 	.refine(
 		(data) => {

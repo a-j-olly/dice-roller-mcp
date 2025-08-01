@@ -112,6 +112,14 @@ dice-roller-mcp --help
   "dice_sides": 20,
   "modifier": 5
 }
+
+// Roll with label for context tracking
+{
+  "dice_count": 1,
+  "dice_sides": 20,
+  "modifier": 3,
+  "label": "Rogue Initiative"
+}
 ```
 
 ### Advanced Options
@@ -159,20 +167,47 @@ dice-roller-mcp --help
 ### Multiple Rolls
 
 ```typescript
+// Multiple rolls with labels for tracking
 {
   "rolls": [
     {
       "dice_count": 1,
       "dice_sides": 20,
-      "modifier": 8
+      "modifier": 8,
+      "label": "Attack Roll"
     },
     {
       "dice_count": 2,
       "dice_sides": 6,
-      "modifier": 3
+      "modifier": 3,
+      "label": "Damage Roll"
     }
   ],
   "count": 1
+}
+
+// Character generation example with labels
+{
+  "rolls": [
+    {
+      "dice_count": 4,
+      "dice_sides": 6,
+      "drop_lowest": 1,
+      "label": "Strength"
+    },
+    {
+      "dice_count": 4,
+      "dice_sides": 6,
+      "drop_lowest": 1,
+      "label": "Dexterity"
+    },
+    {
+      "dice_count": 4,
+      "dice_sides": 6,
+      "drop_lowest": 1,
+      "label": "Constitution"
+    }
+  ]
 }
 ```
 

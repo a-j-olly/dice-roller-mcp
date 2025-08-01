@@ -368,6 +368,47 @@ describe('rollDice', () => {
 			'Rolled 4d6, keeping highest 2, rerolling 1s, adding 3'
 		);
 	});
+
+	test('includes label in result when provided', () => {
+		const mockValues = [2 / 6]; // will result in [3]
+		let currentIndex = 0;
+		Math.random = vi.fn(
+			() => mockValues[currentIndex++]
+		) as unknown as () => number;
+
+		const params: RollDiceParams = {
+			dice_count: 1,
+			dice_sides: 6,
+			label: 'Initiative Roll',
+		};
+
+		const result = rollDice(params);
+
+		expect(result.label).toBe('Initiative Roll');
+		expect(result.total).toBe(3);
+		expect(result.operation).toBe('1d6');
+		expect(result.description).toBe('Rolled 1d6');
+	});
+
+	test('does not include label in result when not provided', () => {
+		const mockValues = [2 / 6]; // will result in [3]
+		let currentIndex = 0;
+		Math.random = vi.fn(
+			() => mockValues[currentIndex++]
+		) as unknown as () => number;
+
+		const params: RollDiceParams = {
+			dice_count: 1,
+			dice_sides: 6,
+		};
+
+		const result = rollDice(params);
+
+		expect(result.label).toBeUndefined();
+		expect(result.total).toBe(3);
+		expect(result.operation).toBe('1d6');
+		expect(result.description).toBe('Rolled 1d6');
+	});
 });
 
 describe('utility functions', () => {

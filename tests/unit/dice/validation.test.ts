@@ -36,6 +36,35 @@ describe('rollDiceSchema', () => {
 		expect(result.success).toBe(true);
 	});
 
+	test('validates roll with label', () => {
+		const validParams: RollDiceParams = {
+			dice_count: 1,
+			dice_sides: 20,
+			modifier: 3,
+			label: 'Attack Roll',
+		};
+
+		const result = rollDiceSchema.safeParse(validParams);
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.label).toBe('Attack Roll');
+		}
+	});
+
+	test('validates roll without label', () => {
+		const validParams: RollDiceParams = {
+			dice_count: 1,
+			dice_sides: 20,
+			modifier: 3,
+		};
+
+		const result = rollDiceSchema.safeParse(validParams);
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.label).toBeUndefined();
+		}
+	});
+
 	test('rejects dice_count below minimum', () => {
 		const invalidParams = {
 			dice_count: 0,

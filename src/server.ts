@@ -32,7 +32,8 @@ export function createDiceRollingServer(): McpServer {
       reroll: z.array(z.number().int()).optional(),
       exploding: z.boolean().optional(),
       target_number: z.number().int().positive().optional(),
-      min_value: z.number().int().positive().optional()
+      min_value: z.number().int().positive().optional(),
+      label: z.string().optional()
     },
     async (args, extra) => {
       try {
@@ -81,7 +82,8 @@ export function createDiceRollingServer(): McpServer {
         reroll: z.array(z.number().int()).optional(),
         exploding: z.boolean().optional(),
         target_number: z.number().int().positive().optional(),
-        min_value: z.number().int().positive().optional()
+        min_value: z.number().int().positive().optional(),
+        label: z.string().optional()
       })).min(1, { message: 'Must include at least one roll configuration' }),
       count: z.number().int().positive().optional()
     },

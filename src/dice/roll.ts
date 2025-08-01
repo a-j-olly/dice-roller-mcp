@@ -50,6 +50,7 @@ export function rollDice(params: RollDiceParams): RollResult {
 		exploding = false,
 		target_number,
 		min_value,
+		label,
 	} = params;
 
 	// Roll all dice
@@ -143,6 +144,7 @@ export function rollDice(params: RollDiceParams): RollResult {
 		dice,
 		operation,
 		description,
+		...(label ? { label } : {}),
 	};
 }
 
