@@ -16,18 +16,23 @@ describe('HTTP Transport Integration', () => {
 		
 		// Start listening
 		await server.listen({ port: testPort, host: '127.0.0.1' });
+		
+		// Wait a bit for server to be fully ready
+		await new Promise(resolve => setTimeout(resolve, 100));
 	});
 
 	afterEach(async () => {
 		if (server) {
 			await server.close();
+			// Wait for server to fully close
+			await new Promise(resolve => setTimeout(resolve, 100));
 		}
 	});
 
 	/**
-	 * Helper function to make HTTP requests to the server
+	 * Helper function to make HTTP requests to the server with retry logic
 	 */
-	async function makeHttpRequest(endpoint: string, method: string = 'GET', body?: any): Promise<Response> {
+	async function makeHttpRequest(endpoint: string, method: string = 'GET', body?: any, retries: number = 3): Promise<Response> {
 		const url = `http://localhost:${testPort}${endpoint}`;
 		const options: RequestInit = {
 			method,
@@ -40,7 +45,20 @@ describe('HTTP Transport Integration', () => {
 			options.body = JSON.stringify(body);
 		}
 
-		return fetch(url, options);
+		for (let i = 0; i < retries; i++) {
+			try {
+				const response = await fetch(url, options);
+				return response;
+			} catch (error) {
+				if (i === retries - 1) {
+					throw error; // Last attempt, throw the error
+				}
+				// Wait before retry
+				await new Promise(resolve => setTimeout(resolve, 100 * (i + 1)));
+			}
+		}
+		
+		throw new Error('All retries failed');
 	}
 
 	describe('Health Check Endpoint', () => {
@@ -102,6 +120,9 @@ describe('HTTP Transport Integration', () => {
 		});
 
 		test('should handle drop dice functionality', async () => {
+			// Add delay between tests to avoid connection issues
+			await new Promise(resolve => setTimeout(resolve, 200));
+			
 			const request = {
 				jsonrpc: '2.0',
 				method: 'tools/call',
@@ -132,6 +153,9 @@ describe('HTTP Transport Integration', () => {
 		});
 
 		test('should handle dice roll with label', async () => {
+			// Add delay between tests to avoid connection issues
+			await new Promise(resolve => setTimeout(resolve, 200));
+			
 			const request = {
 				jsonrpc: '2.0',
 				method: 'tools/call',
@@ -159,6 +183,9 @@ describe('HTTP Transport Integration', () => {
 		});
 
 		test('should handle roll_multiple tool with labels', async () => {
+			// Add delay between tests to avoid connection issues
+			await new Promise(resolve => setTimeout(resolve, 200));
+			
 			const request = {
 				jsonrpc: '2.0',
 				method: 'tools/call',
