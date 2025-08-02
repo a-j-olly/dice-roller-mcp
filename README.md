@@ -39,18 +39,19 @@ Roll dice with advanced modifiers and options.
 ```json
 {
   "result": {
-    "total": 14,
+    "total": 15,
     "dice": [
-      {"die": 1, "sides": 6, "rolls": [4], "value": 4, "kept": true, "special": null},
-      {"die": 2, "sides": 6, "rolls": [2], "value": 2, "kept": true, "special": null},
-      {"die": 3, "sides": 6, "rolls": [5], "value": 5, "kept": true, "special": null}
+      {"die": 1, "sides": 6, "rolls": [6], "value": 6, "kept": true, "special": null},
+      {"die": 2, "sides": 6, "rolls": [5], "value": 5, "kept": true, "special": null},
+      {"die": 3, "sides": 6, "rolls": [4], "value": 4, "kept": true, "special": null},
+      {"die": 4, "sides": 6, "rolls": [2], "value": 2, "kept": false, "special": "dropped"}
     ],
-    "operation": "3d6+3",
-    "description": "Rolled 3d6, adding 3",
-    "label": "Initiative Roll"
+    "operation": "4d6dl1",
+    "description": "Rolled 4d6, dropping 1 lowest",
+    "label": "Ability Score"
   },
   "metadata": {
-    "parameters": {"dice_count": 3, "dice_sides": 6, "modifier": 3, "label": "Initiative Roll"},
+    "parameters": {"dice_count": 4, "dice_sides": 6, "drop_lowest": 1, "label": "Ability Score"},
     "timestamp": "2025-08-01T21:07:50.234Z"
   }
 }
