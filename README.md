@@ -9,7 +9,7 @@ This tool adds reliable dice rolling capabilities to AI assistants. Perfect for 
 This tool lets AI assistants roll dice for you with support for:
 
 - **Standard rolls**: `3d6`, `1d20+5`
-- **TTRPG mechanics**: Advantage (2d20kh1, roll twice, keep highest), ability scores generation (4d6dl1, drop lowest)
+- **TTRPG mechanics**: Advantage (`2d20kh1`, roll twice, keep highest), ability scores generation (`4d6dl1`, drop lowest)
 - **Advanced features**: Exploding dice, rerolls, success counting, keep/drop highest/lowest
 - **Multiple rolls**: Attack + damage, character generation, horde attack rolls
 
@@ -119,16 +119,16 @@ Restart Claude Desktop or your VS Code extension to load the dice roller.
 
 ## How to Use
 
-Once configured, ask your AI assistant to roll dice:
+Once configured, ask your AI assistant the following:
 
 - *"Roll me a D&D 5e player character"*
-- *"Roll 2d20 keep highest for advantage"*
+- *"Roll me an attack with advantage"*
 - *"Roll 5d10 and count successes of 6 or higher"*
 - *"Roll initiative for the party"*
 - *"Roll 4d6 drop lowest for ability scores"*
-- *"Roll exploding d6s for damage"*
+- *"Roll exploding 4d6 for damage"*
 - *"Make a group luck roll"*
-- *"Roll 3d6+5 and reroll any 1s"*
+- *"Roll 2d6+5 and reroll any 1s or 2s"*
 
 ## Available Dice Features
 
