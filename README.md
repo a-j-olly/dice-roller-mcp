@@ -1,255 +1,175 @@
 # Dice Rolling MCP Server
 
-An MCP (Model Context Protocol) server that provides dice rolling functionality for tabletop RPG sessions. This server gives LLMs secure, controlled access to sophisticated dice rolling operations commonly used in tabletop gaming.
+Have you ever wondered whether your favorite AI assistant is *really* rolling random dice?
 
-## Features
+This tool that adds reliable dice rolling capabilities to AI assistants. Perfect for tabletop RPG sessions, this server is suitable for a broad set of rules.
 
-### Tools
+## What This Does
 
-#### `roll_dice`
+This tool lets AI assistants roll dice for you with support for:
 
-Roll dice with advanced modifiers and options.
+- **Standard rolls**: `3d6`, `1d20+5`
+- **TTRPG mechanics**: Advantage (roll twice, keep highest), ability scores generation (4d6, drop lowest)
+- **Advanced features**: Exploding dice, rerolls, success counting, keep/drop highest/lowest
+- **Multiple rolls**: Attack + damage, character generation, horde attack rolls
 
-**Parameters:**
+## Quick Setup
 
-- `dice_count` (required): Number of dice to roll (1-1000)
-- `dice_sides` (required): Number of sides per die (1-100)
-- `modifier` (optional): Number to add/subtract from total
-- `keep_highest` (optional): Keep only the N highest dice
-- `keep_lowest` (optional): Keep only the N lowest dice  
-- `drop_highest` (optional): Drop the N highest dice
-- `drop_lowest` (optional): Drop the N lowest dice
-- `reroll` (optional): Array of values to reroll (e.g., [1, 2])
-- `exploding` (optional): Reroll and add when maximum value is rolled
-- `target_number` (optional): Count successes at or above this number
-- `min_value` (optional): Minimum value for each die
-- `label` (optional): Text label for the roll
+### Step 1: Install
 
-**Examples:**
+**Recommended - No installation needed:**
+Use npx to automatically download and run the latest version. This ensures you always have the most recent version without manual updates.
 
-- Standard: `3d6`, `1d20+5`
-- D&D Advantage: `2d20kh1` (keep highest)
-- Ability Scores: `4d6dl1` (drop lowest)
-- Great Weapon Fighting: `2d6r12` (reroll 1s and 2s)
-- Exploding Dice: `1d6!` (Savage Worlds style)
-- Success Counting: `5d10≥6` (World of Darkness style)
-
-**Example Result:**
-
-```json
-{
-  "result": {
-    "total": 15,
-    "dice": [
-      {"die": 1, "sides": 6, "rolls": [6], "value": 6, "kept": true, "special": null},
-      {"die": 2, "sides": 6, "rolls": [5], "value": 5, "kept": true, "special": null},
-      {"die": 3, "sides": 6, "rolls": [4], "value": 4, "kept": true, "special": null},
-      {"die": 4, "sides": 6, "rolls": [2], "value": 2, "kept": false, "special": "dropped"}
-    ],
-    "operation": "4d6dl1",
-    "description": "Rolled 4d6, dropping 1 lowest",
-    "label": "Ability Score"
-  },
-  "metadata": {
-    "parameters": {"dice_count": 4, "dice_sides": 6, "drop_lowest": 1, "label": "Ability Score"},
-    "timestamp": "2025-08-01T21:07:50.234Z"
-  }
-}
-```
-
-#### `roll_multiple`
-
-Perform multiple dice rolls in a single operation.
-
-**Parameters:**
-
-- `rolls` (required): Array of roll configurations (each using `roll_dice` parameters)
-- `count` (optional): Number of times to repeat the entire set
-
-**Use Cases:**
-
-- Attack + damage rolls
-- Character generation (multiple ability scores)
-- Complex spell effects with multiple components
-
-**Example Result:**
-
-```json
-{
-  "results": [
-    {
-      "total": 23,
-      "dice": [{"die": 1, "sides": 20, "rolls": [15], "value": 15, "kept": true, "special": null}],
-      "operation": "1d20+8",
-      "description": "Rolled 1d20, adding 8",
-      "label": "Attack Roll"
-    },
-    {
-      "total": 9,
-      "dice": [
-        {"die": 1, "sides": 6, "rolls": [3], "value": 3, "kept": true, "special": null},
-        {"die": 2, "sides": 6, "rolls": [3], "value": 3, "kept": true, "special": null}
-      ],
-      "operation": "2d6+3",
-      "description": "Rolled 2d6, adding 3",
-      "label": "Damage Roll"
-    }
-  ],
-  "metadata": {
-    "count": 1,
-    "total_rolls": 2,
-    "timestamp": "2025-08-01T21:07:50.234Z"
-  }
-}
-```
-
-### Transports
-
-- **Stdio transport** - Direct process communication for local integrations
-- **HTTP/SSE transport** - Network-based communication with rate limiting and CORS support
-
-## Installation
+**Alternative - Global installation:**
 
 ```bash
-git clone <repository-url>
+npm install -g dice-roller-mcp
+```
+
+Use this if you want faster startup times.
+
+**Developers only** (if you want to modify the code):
+
+```bash
+git clone https://github.com/a-j-olly/dice-roller-mcp
 cd dice-roller-mcp
 npm install
 npm run build
 ```
 
-## Configuration
+### Step 2: Configure Your AI Assistant
 
-### Claude Desktop
+#### Claude Desktop
 
-#### Stdio Transport (Recommended)
+Find your config file:
 
-Add this configuration to your Claude Desktop config file (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+**Recommended configuration (using npx):**
+
+```json
+{
+  "mcpServers": {
+    "dice-roller": {
+      "command": "npx",
+      "args": ["dice-roller-mcp"]
+    }
+  }
+}
+```
+
+**If you installed globally:**
+
+```json
+{
+  "mcpServers": {
+    "dice-roller": {
+      "command": "dice-roller-mcp"
+    }
+  }
+}
+```
+
+**If you cloned the repository:**
 
 ```json
 {
   "mcpServers": {
     "dice-roller": {
       "command": "node",
-      "args": ["/path/to/dice-roller-mcp/dist/index.js", "--transport=stdio"],
-      "env": {}
+      "args": ["/path/to/dice-roller-mcp/dist/index.js"]
     }
   }
 }
 ```
 
-Replace `/path/to/dice-roller-mcp` with the actual path to your installation.
+#### Other AI Assistants
 
-#### Docker Container
-
-For Docker deployment, see the [Docker section](#docker) below. Note that HTTP transport requires additional MCP protocol bridging setup.
-
-### Other MCP Clients
-
-#### Continue (VS Code Extension)
-
-Add to your Continue config file (`~/.continue/config.json`):
+**Continue (VS Code extension)** - Add to `~/.continue/config.json`:
 
 ```json
 {
   "mcpServers": {
     "dice-roller": {
-      "command": "node",
-      "args": ["/path/to/dice-roller-mcp/dist/index.js", "--transport=stdio"]
+      "command": "npx",
+      "args": ["dice-roller-mcp"]
     }
   }
 }
 ```
 
-#### Cline (VS Code Extension)
-
-Add to your VS Code settings.json:
+**Cline (VS Code extension)** - Add to VS Code settings.json:
 
 ```json
 {
   "cline.mcpServers": {
     "dice-roller": {
-      "command": "node",
-      "args": ["/path/to/dice-roller-mcp/dist/index.js", "--transport=stdio"]
+      "command": "npx",
+      "args": ["dice-roller-mcp"]
     }
   }
 }
 ```
 
-#### Generic MCP Client
+### Step 3: Restart Your AI Assistant
 
-For any MCP client that supports stdio transport:
+Restart Claude Desktop or your VS Code extension to load the dice roller.
 
-```bash
-# Start the server
-node /path/to/dice-roller-mcp/dist/index.js --transport=stdio
-```
+## How to Use
 
-For HTTP transport:
+Once configured, ask your AI assistant to roll dice:
 
-```bash
-# Start HTTP server on port 3000
-node /path/to/dice-roller-mcp/dist/index.js --transport=http --port=3000
+- *"Roll me a D&D 5e player character"*
+- *"Roll 2d20 keep highest for advantage"*
+- *"Roll 5d10 and count successes of 6 or higher"*
+- *"Roll initiative for the party"*
+- *"Roll 4d6 drop lowest for ability scores"*
+- *"Roll exploding d6s for damage"*
+- *"Make a group luck roll"*
+- *"Roll 3d6+5 and reroll any 1s"*
 
-# Connect to: http://localhost:3000/rpc
-# SSE endpoint: http://localhost:3000/events
-# Health check: http://localhost:3000/health
-```
+## Available Dice Features
 
+### Basic Rolling
 
-## Usage Examples
+- **Simple rolls**: Any number of dice with any number of sides
+- **Modifiers**: Add or subtract numbers from the total
+- **Labels**: Name your rolls ("Attack Roll", "Damage", etc.)
 
-### Single Dice Rolls
+### Advanced Mechanics
 
-```json
-// Basic roll: 3d6
-{"dice_count": 3, "dice_sides": 6}
-
-// With modifier: 1d20+5
-{"dice_count": 1, "dice_sides": 20, "modifier": 5}
-
-// D&D ability score: 4d6 drop lowest
-{"dice_count": 4, "dice_sides": 6, "drop_lowest": 1}
-
-// Advantage: 2d20 keep highest
-{"dice_count": 2, "dice_sides": 20, "keep_highest": 1}
-
-// Exploding dice: 1d6!
-{"dice_count": 1, "dice_sides": 6, "exploding": true}
-
-// Success counting: 5d10≥6
-{"dice_count": 5, "dice_sides": 10, "target_number": 6}
-
-// With label: Initiative roll
-{"dice_count": 1, "dice_sides": 20, "modifier": 3, "label": "Initiative"}
-```
+- **Keep/Drop**: Keep or drop the highest/lowest dice
+- **Rerolls**: Reroll specific values (Great Weapon Fighting in D&D)
+- **Exploding dice**: When you roll the maximum, roll again and add
+- **Success counting**: Count how many dice meet a target number
+- **Minimum values**: Set a floor for individual dice
 
 ### Multiple Rolls
 
-```json
-// Attack + Damage
-{
-  "rolls": [
-    {"dice_count": 1, "dice_sides": 20, "modifier": 8, "label": "Attack"},
-    {"dice_count": 2, "dice_sides": 6, "modifier": 3, "label": "Damage"}
-  ]
-}
+Roll several different dice at once:
 
-// Character generation
-{
-  "rolls": [
-    {"dice_count": 4, "dice_sides": 6, "drop_lowest": 1, "label": "Strength"},
-    {"dice_count": 4, "dice_sides": 6, "drop_lowest": 1, "label": "Dexterity"},
-    {"dice_count": 4, "dice_sides": 6, "drop_lowest": 1, "label": "Constitution"}
-  ]
-}
-```
+- Attack roll + damage roll
+- All six ability scores for character creation
+- Complex spell effects with multiple components
 
-## Docker
+## Docker (Advanced Users)
+
+Docker deployment is ideal for:
+
+- Production environments
+- Containerized infrastructure
+- Web-based integrations requiring HTTP transport
+- Isolated testing environments
 
 ### Quick Start
 
 ```bash
-# Build and run with Docker
+# Clone repository (required for Docker)
+git clone <repository-url>
+cd dice-roller-mcp
+
+# Build and run with npm scripts
 npm run docker:build
 npm run docker:run
 
@@ -260,48 +180,63 @@ docker run -p 3000:3000 dice-roller-mcp
 
 ### Docker Commands
 
-```bash
-# Build the image
-npm run docker:build
-# or: docker build -t dice-roller-mcp .
+**Building:**
 
-# Run container (foreground)
+```bash
+# Using npm script (recommended)
+npm run docker:build
+
+# Using Docker directly
+docker build -t dice-roller-mcp .
+```
+
+**Running:**
+
+```bash
+# Foreground (logs visible)
 npm run docker:run
 # or: docker run -p 3000:3000 dice-roller-mcp
 
-# Run container (background)
-docker run -d -p 3000:3000 --name dice-roller-mcp dice-roller-mcp
+# Background (detached)
+docker run -d -p 3000:3000 --name dice-roller dice-roller-mcp
 
-# Stop and remove container
-docker stop dice-roller-mcp
-docker rm dice-roller-mcp
+# Custom port
+docker run -p 8080:3000 dice-roller-mcp
+```
 
-# View container logs
-docker logs dice-roller-mcp
+**Management:**
 
-# Test the Docker container
-npm run docker:test
+```bash
+# View logs
+docker logs dice-roller
+
+# Stop container
+docker stop dice-roller
+
+# Remove container
+docker rm dice-roller
+
+# Remove image
+docker rmi dice-roller-mcp
 ```
 
 ### Docker Image Details
 
-- **Base Image**: Node.js 22 Slim (production-optimized Debian-based)
+- **Base**: Node.js 22 Slim (Debian-based, production-optimized)
+- **Size**: ~257MB (multi-stage build optimized)
 - **Security**: Runs as non-root user `mcp`
-- **Port**: Exposes port 3000 for HTTP transport
-- **Size**: ~257MB optimized with multi-stage build
-- **Node.js Version**: v22.17.1 (Latest LTS)
+- **Port**: Exposes 3000 (HTTP transport only)
+- **Environment**: Production Node.js environment
 
-### Using the Docker Container
+### Using the Container
 
-Once the container is running, you can access:
-
-- **JSON-RPC endpoint**: `http://localhost:3000/rpc`
-- **Server-Sent Events**: `http://localhost:3000/events`
-- **Health check**: `http://localhost:3000/health`
-
-Example API call:
+Once running, the container provides HTTP endpoints:
 
 ```bash
+# Health check
+curl http://localhost:3000/health
+
+# JSON-RPC API
 curl -X POST http://localhost:3000/rpc \
   -H "Content-Type: application/json" \
   -d '{
@@ -316,74 +251,139 @@ curl -X POST http://localhost:3000/rpc \
     },
     "id": 1
   }'
+
+# Server-Sent Events (for real-time updates)
+curl http://localhost:3000/events
 ```
 
-## Development
+### Docker Compose
 
+For production deployments, create `docker-compose.yml`:
 
-### Available Scripts
+```yaml
+version: '3.8'
+services:
+  dice-roller:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+```
+
+Run with: `docker-compose up -d`
+
+### Integration with MCP Clients
+
+**Note**: Docker containers use HTTP transport, which requires additional setup for most MCP clients. The stdio transport (used by Claude Desktop and VS Code extensions) doesn't work directly with Docker containers.
+
+For HTTP-based integrations, connect to:
+
+- **JSON-RPC endpoint**: `http://localhost:3000/rpc`
+- **Server-Sent Events**: `http://localhost:3000/events`
+- **Health check**: `http://localhost:3000/health`
+
+### Testing Docker
 
 ```bash
-# Build and run
-npm run build          # Compile TypeScript  
-npm run start          # Start server (stdio transport)
-npm run start:http     # Start HTTP transport on port 3000
-npm run debug          # Start with MCP inspector for debugging
+# Run all tests (builds image if needed)
+npm run docker:test
 
-# Testing
-npm test               # Unit + integration tests (no Docker)
-npm run test:docker    # Docker integration tests
-npm run test:all       # All tests including Docker
+# Manual testing
+docker run --rm dice-roller-mcp npm test
+```
 
-# Docker
-npm run docker:build   # Build Docker image
-npm run docker:run     # Run Docker container
-npm run docker:test    # Build and test Docker
+## For Developers
+
+### Development Commands
+
+```bash
+npm run build          # Compile the code
+npm run start          # Start the server
+npm test               # Run all tests
+npm run debug          # Debug with MCP inspector
 ```
 
 ### Project Structure
 
-```
-src/
-├── index.ts           # Entry point and transport selection
-├── server.ts          # MCP server implementation
-├── dice/
-│   ├── roll.ts        # Core dice rolling logic
-│   ├── types.ts       # TypeScript interfaces
-│   └── validation.ts  # Parameter validation
-├── transports/
-│   ├── stdio.ts       # Stdio transport implementation
-│   └── http.ts        # HTTP/SSE transport implementation
-└── utils/
-    └── logging.ts     # Logging utilities
-```
+- `src/dice/` - Core dice rolling logic
+- `src/transports/` - Communication methods (stdio, HTTP)
+- `src/server.ts` - Main MCP server
+- `tests/` - Unit and integration tests
 
-## Debugging
+### Testing
 
-Use the MCP inspector for debugging:
+The server includes comprehensive tests covering:
 
-```bash
-npm run debug
-```
+- All dice mechanics and edge cases
+- Integration with MCP protocol
+- Both stdio and HTTP transports
 
-This will start the server with the MCP inspector attached, allowing you to test tools and inspect the protocol communication.
+## Technical Details
 
-## Security Considerations
+### Tools Provided
 
-- Input validation using Zod schemas prevents malicious parameter injection
-- Rate limiting on HTTP transport prevents abuse
-- No file system access or external network calls
-- All operations are deterministic and safe
+#### `roll_dice`
+
+Rolls dice with optional modifiers.
+
+**Parameters:**
+
+- `dice_count` (1-1000): How many dice to roll
+- `dice_sides` (1-100): Sides per die
+- `modifier`: Number to add/subtract
+- `keep_highest`/`keep_lowest`: Keep only N best/worst dice
+- `drop_highest`/`drop_lowest`: Remove N best/worst dice
+- `reroll`: Array of values to reroll (e.g., [1, 2])
+- `exploding`: Reroll max values and add to total
+- `target_number`: Count successes ≥ this number
+- `min_value`: Minimum value per die
+- `label`: Text description
+
+#### `roll_multiple`
+
+Performs several dice rolls in one operation.
+
+**Parameters:**
+
+- `rolls`: Array of roll configurations
+- `count`: Repeat the entire set N times
+
+### Communication Methods
+
+- **Stdio**: Direct process communication (recommended for most AI assistants)
+- **HTTP**: Web-based API with rate limiting (for web integrations)
+
+### Security
+
+- All inputs validated to prevent malicious use
+- No file system or network access
+- Rate limiting on HTTP endpoints
+- Runs in isolated environment
+
+## Troubleshooting
+
+**"Command not found"**: Make sure you installed the package and restarted your AI assistant.
+
+**"Permission denied"**: Try installing with `sudo npm install -g dice-roller-mcp` on macOS/Linux.
+
+**Still not working?**: Check that your config file syntax is correct (use a JSON validator).
 
 ## Contributing
 
-Contributions are welcome! This server is part of the Model Context Protocol ecosystem. Please feel free to:
+We welcome contributions! Feel free to:
 
-- Report issues
-- Submit feature requests
-- Contribute code improvements
+- Report bugs or request features
+- Submit code improvements
 - Add support for new dice mechanics
+- Improve documentation
 
 ## License
 
-MIT
+MIT - see LICENSE file for details.
