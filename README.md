@@ -2,14 +2,14 @@
 
 Have you ever wondered whether your favorite AI assistant is *really* rolling random dice?
 
-This tool that adds reliable dice rolling capabilities to AI assistants. Perfect for tabletop RPG sessions, this server is suitable for a broad set of rules.
+This tool adds reliable dice rolling capabilities to AI assistants. Perfect for tabletop RPG sessions, this server is suitable for a broad set of gaming rules.
 
 ## What This Does
 
 This tool lets AI assistants roll dice for you with support for:
 
 - **Standard rolls**: `3d6`, `1d20+5`
-- **TTRPG mechanics**: Advantage (roll twice, keep highest), ability scores generation (4d6, drop lowest)
+- **TTRPG mechanics**: Advantage (2d20kh1, roll twice, keep highest), ability scores generation (4d6dl1, drop lowest)
 - **Advanced features**: Exploding dice, rerolls, success counting, keep/drop highest/lowest
 - **Multiple rolls**: Attack + damage, character generation, horde attack rolls
 
@@ -18,7 +18,8 @@ This tool lets AI assistants roll dice for you with support for:
 ### Step 1: Install
 
 **Recommended - No installation needed:**
-Use npx to automatically download and run the latest version. This ensures you always have the most recent version without manual updates.
+
+Configure you AI assistant to use npx to automatically download and run the latest version (move to step 2). This ensures you always have the most recent version without manual updates.
 
 **Alternative - Global installation:**
 
@@ -26,7 +27,7 @@ Use npx to automatically download and run the latest version. This ensures you a
 npm install -g dice-roller-mcp
 ```
 
-Use this if you want faster startup times.
+Use this if you want slightly faster startup times.
 
 **Developers only** (if you want to modify the code):
 
