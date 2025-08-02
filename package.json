@@ -15,7 +15,7 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/a-j-olly/dice-roller-mcp"
+		"url": "git+https://github.com/a-j-olly/dice-roller-mcp.git"
 	},
 	"type": "module",
 	"scripts": {
@@ -27,9 +27,8 @@
 		"debug": "npx -y @modelcontextprotocol/inspector node dist/index.js --transport=stdio --debug",
 		"help": "node dist/index.js --help",
 		"prepack": "npm run build && cp dist/*.js dist/*.d.ts dist/*.map . 2>/dev/null || true && ls -1 *.js *.d.ts *.map 2>/dev/null > .pack-files || true",
-		"postpack": "test -f .pack-files && xargs rm -f < .pack-files && rm -f .pack-files || true",
+		"postpublish": "test -f .pack-files && xargs rm -f < .pack-files && rm -f .pack-files || true",
 		"pretest": "npm run build",
-		"prepublish": "npm run build",
 		"test": "vitest run",
 		"test:unit": "vitest run tests/unit",
 		"test:integration": "vitest run tests/integration",

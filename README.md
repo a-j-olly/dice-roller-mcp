@@ -54,7 +54,7 @@ Find your config file:
   "mcpServers": {
     "dice-roller": {
       "command": "npx",
-      "args": ["dice-roller-mcp"]
+      "args": ["-y", "dice-roller-mcp"]
     }
   }
 }
@@ -94,7 +94,7 @@ Find your config file:
   "mcpServers": {
     "dice-roller": {
       "command": "npx",
-      "args": ["dice-roller-mcp"]
+      "args": ["-y", "dice-roller-mcp"]
     }
   }
 }
@@ -107,7 +107,7 @@ Find your config file:
   "cline.mcpServers": {
     "dice-roller": {
       "command": "npx",
-      "args": ["dice-roller-mcp"]
+      "args": ["-y", "dice-roller-mcp"]
     }
   }
 }
