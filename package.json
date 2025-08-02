@@ -1,11 +1,14 @@
 {
 	"name": "dice-roller-mcp",
-	"version": "1.2.0",
+	"version": "1.0.0",
 	"description": "An MCP server that provides dice rolling functionality for tabletop RPG sessions",
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"main": "index.js",
+	"types": "index.d.ts",
 	"files": [
-		"dist"
+		"*.js",
+		"*.d.ts",
+		"*.js.map",
+		"*.d.ts.map"
 	],
 	"repository": {
 		"type": "git",
@@ -20,16 +23,18 @@
 		"start:http:8080": "node dist/index.js --http --port=8080",
 		"debug": "npx -y @modelcontextprotocol/inspector node dist/index.js --transport=stdio --debug",
 		"help": "node dist/index.js --help",
-		"test": "vitest run tests/unit tests/integration",
+		"prepack": "npm run build && cp dist/*.js dist/*.d.ts dist/*.map . 2>/dev/null || true && ls -1 *.js *.d.ts *.map 2>/dev/null > .pack-files || true",
+		"postpack": "test -f .pack-files && xargs rm -f < .pack-files && rm -f .pack-files || true",
+		"pretest": "npm run build",
+		"test": "vitest run",
 		"test:unit": "vitest run tests/unit",
 		"test:integration": "vitest run tests/integration",
 		"test:docker": "vitest run tests/docker",
-		"test:all": "vitest run",
-		"test:watch": "vitest tests/unit tests/integration",
+		"test:watch": "vitest",
 		"test:watch:unit": "vitest tests/unit",
 		"test:watch:integration": "vitest tests/integration",
 		"test:watch:docker": "vitest tests/docker",
-		"coverage": "vitest run --coverage tests/unit tests/integration",
+		"coverage": "vitest run --coverage",
 		"docker:build": "docker build -t dice-roller-mcp .",
 		"docker:run": "docker run -p 3000:3000 dice-roller-mcp",
 		"docker:test": "npm run docker:build && npm run test:docker"
