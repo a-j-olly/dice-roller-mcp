@@ -19,7 +19,7 @@ describe('Stdio Transport Integration', () => {
 
 	beforeEach(async () => {
 		// Start the server as a subprocess
-		serverProcess = spawn('node', ['build/src/index.js', '--stdio'], {
+		serverProcess = spawn('node', ['dist/index.js', '--stdio'], {
 			stdio: ['pipe', 'pipe', 'pipe']
 		});
 

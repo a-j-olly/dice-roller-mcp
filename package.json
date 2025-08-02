@@ -1,27 +1,41 @@
 {
 	"name": "dice-roller-mcp",
-	"version": "1.2.0",
+	"version": "1.0.0",
 	"description": "An MCP server that provides dice rolling functionality for tabletop RPG sessions",
-	"main": "build/index.js",
+	"main": "index.js",
+	"types": "index.d.ts",
+	"files": [
+		"*.js",
+		"*.d.ts",
+		"*.js.map",
+		"*.d.ts.map"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/a-j-olly/dice-roller-mcp"
+	},
 	"type": "module",
 	"scripts": {
-		"build": "tsc",
-		"start": "node build/src/index.js",
-		"start:stdio": "node build/src/index.js --transport=stdio",
-		"start:http": "node build/src/index.js --transport=http",
-		"start:http:8080": "node build/src/index.js --http --port=8080",
-		"debug": "npx -y @modelcontextprotocol/inspector node build/src/index.js --transport=stdio --debug",
-		"help": "node build/src/index.js --help",
-		"test": "vitest run tests/unit tests/integration",
+		"build": "tsup src/index.ts --format esm --dts",
+		"start": "node dist/index.js",
+		"start:stdio": "node dist/index.js --transport=stdio",
+		"start:http": "node dist/index.js --transport=http",
+		"start:http:8080": "node dist/index.js --http --port=8080",
+		"debug": "npx -y @modelcontextprotocol/inspector node dist/index.js --transport=stdio --debug",
+		"help": "node dist/index.js --help",
+		"prepack": "npm run build && cp dist/*.js dist/*.d.ts dist/*.map . 2>/dev/null || true && ls -1 *.js *.d.ts *.map 2>/dev/null > .pack-files || true",
+		"postpack": "test -f .pack-files && xargs rm -f < .pack-files && rm -f .pack-files || true",
+		"pretest": "npm run build",
+		"prepublish": "npm run build",
+		"test": "vitest run",
 		"test:unit": "vitest run tests/unit",
 		"test:integration": "vitest run tests/integration",
 		"test:docker": "vitest run tests/docker",
-		"test:all": "vitest run",
-		"test:watch": "vitest tests/unit tests/integration",
+		"test:watch": "vitest",
 		"test:watch:unit": "vitest tests/unit",
 		"test:watch:integration": "vitest tests/integration",
 		"test:watch:docker": "vitest tests/docker",
-		"coverage": "vitest run --coverage tests/unit tests/integration",
+		"coverage": "vitest run --coverage",
 		"docker:build": "docker build -t dice-roller-mcp .",
 		"docker:run": "docker run -p 3000:3000 dice-roller-mcp",
 		"docker:test": "npm run docker:build && npm run test:docker"
@@ -31,18 +45,21 @@
 		"dice",
 		"rpg",
 		"tabletop",
-		"model-context-protocol"
+		"model-context-protocol",
+		"ttrpg",
+		"random"
 	],
-	"author": "",
+	"author": "Aaron Oliver",
 	"license": "MIT",
 	"dependencies": {
-		"@modelcontextprotocol/sdk": "^1.10.2",
 		"@fastify/cors": "^9.0.1",
+		"@modelcontextprotocol/sdk": "^1.10.2",
 		"fastify": "^4.24.0",
 		"zod": "^3.22.4"
 	},
 	"devDependencies": {
 		"@types/node": "^20.8.2",
+		"tsup": "^8.5.0",
 		"typescript": "^5.2.2",
 		"vitest": "^1.3.1"
 	}

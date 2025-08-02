@@ -27,7 +27,7 @@ describe('Entry Point (index.ts)', () => {
 			let stderr = '';
 			let resolved = false;
 			
-			serverProcess = spawn('node', ['build/src/index.js', ...args], {
+			serverProcess = spawn('node', ['dist/index.js', ...args], {
 				stdio: ['pipe', 'pipe', 'pipe']
 			});
 

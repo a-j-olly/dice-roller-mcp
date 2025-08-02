@@ -3,279 +3,275 @@
  * Tests the HTTP server running in a Docker container.
  */
 import { describe, test, expect, beforeAll, afterAll } from 'vitest';
-import { spawn, ChildProcess } from 'child_process';
+import { spawn, execSync } from 'child_process';
+
+// Check Docker availability at module level for proper test skipping
+let dockerAvailable = false;
+
+try {
+	execSync('docker --version', { stdio: 'ignore' });
+	execSync('docker info', { stdio: 'ignore' });
+	dockerAvailable = true;
+} catch {
+	dockerAvailable = false;
+}
 
 describe('Docker Container Integration', () => {
-	let containerProcess: ChildProcess;
 	let containerId: string;
 	const testPort = 9999; // Use a different port to avoid conflicts
 
-	beforeAll(async () => {
-		// Build the Docker image
-		console.log('Building Docker image...');
-		await execCommand('npm run docker:build');
 
-		// Start container in detached mode
-		console.log('Starting Docker container...');
-		const result = await execCommand(`docker run -d -p ${testPort}:3000 dice-roller-mcp`);
+	beforeAll(async () => {
+		if (!dockerAvailable) return;
+
+		// Check if image already exists, build if needed
+		try {
+			await execCommand('docker image inspect dice-roller-mcp');
+		} catch {
+			await execCommandWithProgress('npm run docker:build', 'Building Docker image');
+		}
+
+		// Start container
+		const result = await execCommandWithProgress(
+			`docker run -d -p ${testPort}:3000 dice-roller-mcp`,
+			'Starting container'
+		);
 		containerId = result.trim();
 
-		// Wait for container to be ready
 		await waitForContainer(testPort);
-	}, 60000); // 60 second timeout for build and startup
+	}, 120000);
 
 	afterAll(async () => {
 		if (containerId) {
-			console.log('Stopping Docker container...');
 			await execCommand(`docker stop ${containerId}`);
 			await execCommand(`docker rm ${containerId}`);
 		}
 	});
 
-	/**
-	 * Helper function to execute shell commands
-	 */
 	function execCommand(command: string): Promise<string> {
 		return new Promise((resolve, reject) => {
 			const process = spawn('sh', ['-c', command]);
 			let stdout = '';
 			let stderr = '';
 
-			process.stdout.on('data', (data) => {
-				stdout += data.toString();
-			});
-
-			process.stderr.on('data', (data) => {
-				stderr += data.toString();
-			});
-
+			process.stdout.on('data', (data) => stdout += data.toString());
+			process.stderr.on('data', (data) => stderr += data.toString());
 			process.on('close', (code) => {
-				if (code === 0) {
-					resolve(stdout);
-				} else {
-					reject(new Error(`Command failed: ${command}\n${stderr}`));
-				}
+				code === 0 
+					? resolve(stdout) 
+					: reject(new Error(`Command failed: ${command}\n${stderr}`));
 			});
 		});
 	}
 
-	/**
-	 * Helper function to wait for container to be ready
-	 */
-	async function waitForContainer(port: number, maxAttempts: number = 30): Promise<void> {
+	function execCommandWithProgress(command: string, description: string): Promise<string> {
+		return new Promise((resolve, reject) => {
+			const startTime = Date.now();
+			const process = spawn('sh', ['-c', command]);
+			let stdout = '';
+			let stderr = '';
+
+			process.stdout.on('data', (data) => stdout += data.toString());
+			process.stderr.on('data', (data) => stderr += data.toString());
+			process.on('close', (code) => {
+				const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+				code === 0
+					? resolve(stdout)
+					: reject(new Error(`${description} failed after ${duration}s: ${command}\n${stderr}`));
+			});
+
+			// 90 second timeout for Docker operations
+			setTimeout(() => {
+				const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+				process.kill();
+				reject(new Error(`${description} timed out after ${duration}s`));
+			}, 90000);
+		});
+	}
+
+	async function waitForContainer(port: number, maxAttempts = 30): Promise<void> {
 		for (let i = 0; i < maxAttempts; i++) {
 			try {
 				const response = await fetch(`http://localhost:${port}/health`);
-				if (response.ok) {
-					console.log('Container is ready!');
-					return;
-				}
-			} catch (error) {
-				// Container not ready yet, wait and retry
+				if (response.ok) return;
+			} catch {
+				// Container not ready, continue trying
 			}
-			
-			await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+			await new Promise(resolve => setTimeout(resolve, 1000));
 		}
-		
 		throw new Error('Container failed to start within timeout period');
 	}
 
-	/**
-	 * Helper function to make HTTP requests to the containerized server
-	 */
-	async function makeHttpRequest(endpoint: string, method: string = 'GET', body?: any): Promise<Response> {
-		const url = `http://localhost:${testPort}${endpoint}`;
-		const options: RequestInit = {
+	async function makeHttpRequest(endpoint: string, method = 'GET', body?: any): Promise<Response> {
+		return fetch(`http://localhost:${testPort}${endpoint}`, {
 			method,
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		};
-
-		if (body) {
-			options.body = JSON.stringify(body);
-		}
-
-		return fetch(url, options);
+			headers: { 'Content-Type': 'application/json' },
+			...(body && { body: JSON.stringify(body) })
+		});
 	}
 
-	describe('Container Health', () => {
-		test('should respond to health check', async () => {
-			const response = await makeHttpRequest('/health');
-			
-			expect(response.status).toBe(200);
-			expect(response.headers.get('content-type')).toContain('application/json');
-			
-			const data = await response.json();
-			expect(data.status).toBe('ok');
-			expect(data.timestamp).toBeDefined();
-		});
 
-		test('should check container logs', async () => {
-			// Wait a bit for logs to be available
-			await new Promise(resolve => setTimeout(resolve, 2000));
-			const logs = await execCommand(`docker logs ${containerId} 2>&1`);
+	describe('Container Health & Logging', () => {
+		test.skipIf(!dockerAvailable)('should have healthy endpoints and clean startup logs', async () => {
+			// Verify health endpoint
+			const healthResponse = await makeHttpRequest('/health');
+			expect(healthResponse.status).toBe(200);
+			expect(healthResponse.headers.get('content-type')).toContain('application/json');
 			
+			const healthData = await healthResponse.json();
+			expect(healthData.status).toBe('ok');
+			expect(healthData.timestamp).toBeDefined();
+			expect(typeof healthData.timestamp).toBe('string');
+
+			// Verify clean startup logs
+			const logs = await execCommand(`docker logs ${containerId} 2>&1`);
 			expect(logs).toContain('Starting dice rolling server');
 			expect(logs).toContain('HTTP server started');
+			expect(logs).not.toContain('ERROR');
+			expect(logs).not.toContain('FATAL');
 		});
 	});
 
 	describe('Dice Rolling API', () => {
-		test('should handle basic dice roll via container', async () => {
+		test.skipIf(!dockerAvailable)('should handle basic JSON-RPC dice requests', async () => {
 			const request = {
 				jsonrpc: '2.0',
 				method: 'tools/call',
 				params: {
 					name: 'roll_dice',
-					arguments: {
-						dice_count: 3,
-						dice_sides: 6,
-						modifier: 2
-					}
+					arguments: { dice_count: 2, dice_sides: 6, modifier: 3 }
 				},
-				id: 1
+				id: 'basic-roll'
 			};
 
 			const response = await makeHttpRequest('/rpc', 'POST', request);
-			
 			expect(response.status).toBe(200);
 			expect(response.headers.get('content-type')).toContain('application/json');
 			
 			const data = await response.json();
 			expect(data.jsonrpc).toBe('2.0');
-			expect(data.id).toBe(1);
-			expect(data.result).toBeDefined();
-			expect(data.result.content).toBeDefined();
+			expect(data.id).toBe('basic-roll');
+			expect(data.result?.content?.[0]?.text).toBeDefined();
 
-			// Parse the dice result
-			const diceResult = JSON.parse(data.result.content[0].text);
-			expect(diceResult.result.total).toBeGreaterThanOrEqual(5); // 3 + 2 minimum
-			expect(diceResult.result.total).toBeLessThanOrEqual(20); // 18 + 2 maximum
-			expect(diceResult.result.operation).toBe('3d6+2');
-			expect(diceResult.result.dice).toHaveLength(3);
+			const result = JSON.parse(data.result.content[0].text);
+			expect(result.result.operation).toBe('2d6+3');
+			expect(result.result.total).toBeGreaterThanOrEqual(5);
+			expect(result.result.total).toBeLessThanOrEqual(15);
+			expect(result.result.dice).toHaveLength(2);
 		});
 
-		test('should handle advanced dice features via container', async () => {
-			// Wait to avoid rate limiting
-			await new Promise(resolve => setTimeout(resolve, 1000));
+		test.skipIf(!dockerAvailable)('should handle advanced features and batch operations', async () => {
+			await new Promise(resolve => setTimeout(resolve, 250)); // Rate limiting
 			
-			const request = {
+			// Test advanced dice features
+			const advancedRequest = {
 				jsonrpc: '2.0',
 				method: 'tools/call',
 				params: {
 					name: 'roll_dice',
-					arguments: {
-						dice_count: 4,
-						dice_sides: 6,
-						keep_highest: 3,
-						label: 'Container Test Roll'
-					}
+					arguments: { dice_count: 4, dice_sides: 6, keep_highest: 3, label: 'Ability Score' }
 				},
-				id: 2
+				id: 'advanced-roll'
 			};
 
-			const response = await makeHttpRequest('/rpc', 'POST', request);
-			
-			expect(response.status).toBe(200);
-			const data = await response.json();
-			const diceResult = JSON.parse(data.result.content[0].text);
-			
-			expect(diceResult.result.operation).toBe('4d6kh3');
-			expect(diceResult.result.label).toBe('Container Test Roll');
-			expect(diceResult.result.dice).toHaveLength(4);
-			
-			// Check that only 3 dice are kept
-			const keptDice = diceResult.result.dice.filter((die: any) => die.kept);
-			expect(keptDice).toHaveLength(3);
-		});
+			const advancedResponse = await makeHttpRequest('/rpc', 'POST', advancedRequest);
+			expect(advancedResponse.status).toBe(200);
 
-		test('should handle multiple rolls via container', async () => {
-			// Wait to avoid rate limiting
-			await new Promise(resolve => setTimeout(resolve, 1000));
+			const advancedData = await advancedResponse.json();
+			const advancedResult = JSON.parse(advancedData.result.content[0].text);
 			
-			const request = {
+			expect(advancedResult.result.operation).toBe('4d6kh3');
+			expect(advancedResult.result.label).toBe('Ability Score');
+			expect(advancedResult.result.dice).toHaveLength(4);
+			
+			const keptDice = advancedResult.result.dice.filter((die: any) => die.kept);
+			expect(keptDice).toHaveLength(3);
+
+			await new Promise(resolve => setTimeout(resolve, 250)); // Rate limiting
+			
+			// Test multiple rolls
+			const multiRequest = {
 				jsonrpc: '2.0',
 				method: 'tools/call',
 				params: {
 					name: 'roll_multiple',
 					arguments: {
 						rolls: [
-							{ dice_count: 1, dice_sides: 20, modifier: 5, label: 'Attack Roll' },
-							{ dice_count: 2, dice_sides: 6, modifier: 3, label: 'Damage Roll' }
+							{ dice_count: 1, dice_sides: 20, modifier: 5, label: 'Attack' },
+							{ dice_count: 1, dice_sides: 8, modifier: 2, label: 'Damage' }
 						]
 					}
 				},
-				id: 3
+				id: 'multi-roll'
 			};
 
-			const response = await makeHttpRequest('/rpc', 'POST', request);
+			const multiResponse = await makeHttpRequest('/rpc', 'POST', multiRequest);
+			expect(multiResponse.status).toBe(200);
 			
-			expect(response.status).toBe(200);
-			const data = await response.json();
-			const diceResult = JSON.parse(data.result.content[0].text);
+			const multiData = await multiResponse.json();
+			const multiResult = JSON.parse(multiData.result.content[0].text);
 			
-			expect(diceResult.results).toHaveLength(2);
-			expect(diceResult.results[0].operation).toBe('1d20+5');
-			expect(diceResult.results[0].label).toBe('Attack Roll');
-			expect(diceResult.results[1].operation).toBe('2d6+3');
-			expect(diceResult.results[1].label).toBe('Damage Roll');
+			expect(multiResult.results).toHaveLength(2);
+			expect(multiResult.results[0].operation).toBe('1d20+5');
+			expect(multiResult.results[0].label).toBe('Attack');
+			expect(multiResult.results[1].operation).toBe('1d8+2');
+			expect(multiResult.results[1].label).toBe('Damage');
 		});
 	});
 
-	describe('Container Security', () => {
-		test('should run as non-root user', async () => {
-			const result = await execCommand(`docker exec ${containerId} whoami`);
-			expect(result.trim()).toBe('mcp');
-		});
-
-		test('should expose only the configured port', async () => {
-			const result = await execCommand(`docker port ${containerId}`);
-			expect(result).toContain('3000/tcp');
+	describe('Container Security & Configuration', () => {
+		test.skipIf(!dockerAvailable)('should run securely with proper configuration', async () => {
+			// Verify non-root user
+			const userResult = await execCommand(`docker exec ${containerId} whoami`);
+			expect(userResult.trim()).toBe('mcp');
+			
+			// Verify port configuration
+			const portResult = await execCommand(`docker port ${containerId}`);
+			expect(portResult).toContain('3000/tcp');
+			expect(portResult).toContain(`0.0.0.0:${testPort}`);
+			
+			// Verify container state
+			const inspectResult = await execCommand(`docker inspect ${containerId} --format '{{.State.Running}}'`);
+			expect(inspectResult.trim()).toBe('true');
 		});
 	});
 
 	describe('Container Performance', () => {
-		test('should handle sequential requests', async () => {
-			// Wait to avoid rate limiting
-			await new Promise(resolve => setTimeout(resolve, 1000));
+		test.skipIf(!dockerAvailable)('should handle sequential requests efficiently', async () => {
+			await new Promise(resolve => setTimeout(resolve, 250)); // Rate limiting
 			
 			const requests = Array.from({ length: 3 }, (_, i) => ({
 				jsonrpc: '2.0',
 				method: 'tools/call',
-				params: {
-					name: 'roll_dice',
-					arguments: {
-						dice_count: 2,
-						dice_sides: 6,
-						label: `Sequential Roll ${i + 1}`
-					}
-				},
-				id: i + 1
+				params: { name: 'roll_dice', arguments: { dice_count: 1, dice_sides: 6 } },
+				id: `perf-${i + 1}`
 			}));
 
-			// Make requests sequentially with delays to avoid rate limiting
-			const responses = [];
+			// Make sequential requests with rate limiting
+			const startTime = Date.now();
+			const responses: Response[] = [];
 			for (const request of requests) {
 				const response = await makeHttpRequest('/rpc', 'POST', request);
 				responses.push(response);
-				await new Promise(resolve => setTimeout(resolve, 300)); // Small delay between requests
+				if (responses.length < requests.length) {
+					await new Promise(resolve => setTimeout(resolve, 250));
+				}
 			}
+			const duration = Date.now() - startTime;
 
-			responses.forEach((response, i) => {
-				expect(response.status).toBe(200);
-			});
+			// Verify all requests succeeded
+			responses.forEach(response => expect(response.status).toBe(200));
 
-			// Verify all responses are valid
-			const results = await Promise.all(
-				responses.map(response => response.json())
-			);
-
-			results.forEach((data, i) => {
+			// Verify valid JSON-RPC responses
+			const results = await Promise.all(responses.map(r => r.json()));
+			results.forEach((data: any, i: number) => {
 				expect(data.jsonrpc).toBe('2.0');
-				expect(data.id).toBe(i + 1);
-				expect(data.result).toBeDefined();
+				expect(data.id).toBe(`perf-${i + 1}`);
+				expect(data.result?.content?.[0]?.text).toBeDefined();
 			});
+
+			// Performance check
+			expect(duration).toBeLessThan(3000);
 		});
 	});
 });

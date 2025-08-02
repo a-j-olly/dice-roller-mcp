@@ -1,6 +1,7 @@
 # Build output
 /build
 /dist
+*.tgz
 
 # Dependencies
 /node_modules

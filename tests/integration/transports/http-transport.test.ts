@@ -82,6 +82,12 @@ describe('HTTP Transport Integration', () => {
 			expect(response.headers.get('content-type')).toBe('text/event-stream');
 			expect(response.headers.get('cache-control')).toBe('no-cache');
 			expect(response.headers.get('connection')).toBe('keep-alive');
+			
+			// Properly close the response body to avoid hanging connections
+			if (response.body) {
+				const reader = response.body.getReader();
+				reader.cancel();
+			}
 		});
 	});
 
