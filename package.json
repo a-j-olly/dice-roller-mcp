@@ -26,6 +26,7 @@
 		"prepack": "npm run build && cp dist/*.js dist/*.d.ts dist/*.map . 2>/dev/null || true && ls -1 *.js *.d.ts *.map 2>/dev/null > .pack-files || true",
 		"postpack": "test -f .pack-files && xargs rm -f < .pack-files && rm -f .pack-files || true",
 		"pretest": "npm run build",
+		"prepublish": "npm run build",
 		"test": "vitest run",
 		"test:unit": "vitest run tests/unit",
 		"test:integration": "vitest run tests/integration",
